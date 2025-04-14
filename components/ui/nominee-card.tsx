@@ -19,6 +19,7 @@ type NomineeCardProps = {
     id: string;
     name: string;
     image?: string | null;
+    imageUrl?: string | null;
     description?: string | null;
     votes?: number;
   };
@@ -48,6 +49,8 @@ export const NomineeCard = ({
   else if (eventStatus === "upcoming") buttonLabel = "Coming Soon";
   else if (isVoting) buttonLabel = "Processing...";
 
+  const imageUrl = nominee.imageUrl || nominee.image;
+
   return (
     <motion.div
       whileHover={{ y: -5 }}
@@ -56,9 +59,9 @@ export const NomineeCard = ({
     >
       <Card className="h-full flex flex-col overflow-hidden border-2 hover:border-primary/50 transition-all duration-300">
         <CardHeader className="p-0 relative aspect-square overflow-hidden">
-          {nominee.image ? (
+          {imageUrl ? (
             <Image
-              src={nominee.image}
+              src={imageUrl}
               alt={nominee.name}
               fill
               className="object-cover"
