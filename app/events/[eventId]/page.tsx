@@ -30,6 +30,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
 import { NomineeCard, NomineeCardSkeleton } from "@/components/ui/nominee-card";
+import { Check, ThumbsUp } from "lucide-react";
+import confetti from "canvas-confetti";
 
 // Define error type
 interface ConvexError {
@@ -72,22 +74,84 @@ interface CategoryType {
   type: "popular_vote" | "judge_vote";
 }
 
-// Mock Paystack implementation
-const PaystackCheckoutMock = ({
+// Real Paystack implementation
+const PaystackCheckout = ({
   amount,
-  email = "voter@example.com",
+  email = "",
   metadata,
   onSuccess,
   onClose,
 }: PaymentProps) => {
-  // Extract vote count from the transaction info
-  const voteCount = metadata.voteCount || 1;
+  const [userEmail, setUserEmail] = useState(email);
+  const [isEmailValid, setIsEmailValid] = useState(false);
 
-  // In a real implementation, this would be using the actual Paystack SDK
+  // Validate email
+  useEffect(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsEmailValid(emailRegex.test(userEmail));
+  }, [userEmail]);
+
+  // Initialize Paystack
+  const initializePayment = () => {
+    if (!isEmailValid) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Convert amount to kobo (pesewas) for Paystack (multiply by 100)
+    const amountInKobo = Math.round(amount * 100);
+
+    // Load Paystack dynamically to avoid SSR issues
+    import("@paystack/inline-js")
+      .then((PaystackPop) => {
+        const paystack = new PaystackPop.default();
+        paystack.newTransaction({
+          key:
+            process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ||
+            "pk_test_yourkeyhere", // Replace with your Paystack public key
+          email: userEmail,
+          amount: amountInKobo,
+          currency: "GHS",
+          ref: `vote_ref_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
+          metadata: {
+            custom_fields: [
+              {
+                display_name: "Event Name",
+                variable_name: "event_name",
+                value: metadata.eventName,
+              },
+              {
+                display_name: "Nominee Name",
+                variable_name: "nominee_name",
+                value: metadata.nomineeName,
+              },
+              {
+                display_name: "Vote Count",
+                variable_name: "vote_count",
+                value: metadata.voteCount || 1,
+              },
+            ],
+          },
+          callback: (response: PaymentResponse) => {
+            onSuccess(response);
+          },
+          onClose: () => {
+            onClose();
+          },
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to load Paystack:", error);
+        toast.error(
+          "Payment provider could not be loaded. Please try again later."
+        );
+      });
+  };
+
   return (
     <div className="space-y-6">
       <div className="border p-4 rounded-md">
-        <h3 className="text-lg font-medium mb-4">Payment Details (Demo)</h3>
+        <h3 className="text-lg font-medium mb-4">Payment Details</h3>
         <div className="space-y-4">
           <div className="flex justify-between">
             <span>Amount:</span>
@@ -96,7 +160,8 @@ const PaystackCheckoutMock = ({
           <div className="flex justify-between">
             <span>Votes:</span>
             <span>
-              {voteCount} vote{voteCount > 1 ? "s" : ""}
+              {metadata.voteCount || 1} vote
+              {(metadata.voteCount || 1) > 1 ? "s" : ""}
             </span>
           </div>
           <div className="flex justify-between">
@@ -107,6 +172,20 @@ const PaystackCheckoutMock = ({
             <span>Nominee:</span>
             <span>{metadata.nomineeName}</span>
           </div>
+          <div className="space-y-2 mt-4">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Your receipt will be sent to this email
+            </p>
+          </div>
         </div>
       </div>
 
@@ -115,14 +194,11 @@ const PaystackCheckoutMock = ({
           Cancel
         </Button>
         <Button
-          onClick={() => {
-            // Generate a mock payment reference
-            const reference = `mock_ref_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-            onSuccess({ reference });
-          }}
+          onClick={initializePayment}
           className="flex-1"
+          disabled={!isEmailValid}
         >
-          Complete Payment (Demo)
+          Pay with Paystack
         </Button>
       </div>
     </div>
@@ -141,6 +217,8 @@ export default function EventPage() {
   );
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [voteCastCount, setVoteCastCount] = useState(0);
 
   // Get event details
   const event = useQuery(
@@ -202,6 +280,47 @@ export default function EventPage() {
   const totalPrice = useMemo(() => {
     return event ? event.votePrice * voteCount : 0;
   }, [event, voteCount]);
+
+  // Trigger confetti effect when success modal is opened
+  useEffect(() => {
+    if (isSuccessModalOpen) {
+      // Create confetti effect
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = {
+        startVelocity: 30,
+        spread: 360,
+        ticks: 60,
+        zIndex: 9999,
+      };
+
+      function randomInRange(min: number, max: number) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval: any = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        // since particles fall down, start a bit higher than random
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        });
+      }, 250);
+    }
+  }, [isSuccessModalOpen]);
 
   if (!event) {
     return (
@@ -267,10 +386,15 @@ export default function EventPage() {
           setVoteCount(1);
           // Use the total votes from the result or fall back to our value
           const displayVotes = verifyResult.totalVotes || finalVoteCount;
-          toast.success(
-            `Your ${displayVotes} vote${displayVotes > 1 ? "s" : ""} have been cast successfully!`
-          );
+
+          // Close payment dialog
           setIsPaymentOpen(false);
+
+          // Store vote count for success modal
+          setVoteCastCount(displayVotes);
+
+          // Show success modal instead of toast
+          setIsSuccessModalOpen(true);
         }
       }
     } catch (error: unknown) {
@@ -528,7 +652,7 @@ export default function EventPage() {
                 </div>
               </div>
 
-              <PaystackCheckoutMock
+              <PaystackCheckout
                 amount={totalPrice}
                 metadata={{
                   eventName: event.name,
@@ -541,6 +665,68 @@ export default function EventPage() {
               />
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Modal */}
+      <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center text-center p-4">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+            <DialogTitle className="text-2xl mb-2">
+              Vote Successful!
+            </DialogTitle>
+            <DialogDescription className="mb-6">
+              Your {voteCastCount} vote{voteCastCount > 1 ? "s have" : " has"}{" "}
+              been successfully cast for{" "}
+              <span className="font-semibold">{selectedNominee?.name}</span>.
+            </DialogDescription>
+
+            <div className="bg-muted p-4 rounded-md w-full mb-6">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm">Nominee:</span>
+                <span className="text-sm font-medium">
+                  {selectedNominee?.name}
+                </span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm">Category:</span>
+                <span className="text-sm font-medium">
+                  {selectedCategory?.name}
+                </span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm">Event:</span>
+                <span className="text-sm font-medium">{event.name}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t mt-2">
+                <span className="text-sm font-medium">Total votes:</span>
+                <span className="text-sm font-bold">{voteCastCount}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsSuccessModalOpen(false)}
+              >
+                Continue Voting
+              </Button>
+              <Button
+                className="flex-1 gap-2"
+                onClick={() => {
+                  setIsSuccessModalOpen(false);
+                  router.push("/events");
+                }}
+              >
+                <ThumbsUp className="h-4 w-4" />
+                Finish
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

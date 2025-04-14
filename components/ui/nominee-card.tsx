@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
+import { ThumbsUp } from "lucide-react";
 
 type NomineeCardProps = {
   nominee: {
@@ -28,6 +31,7 @@ type NomineeCardProps = {
   onVoteClick?: (nomineeId: string) => void;
   isVoting?: boolean;
   className?: string;
+  hideVotes?: boolean;
 };
 
 export const NomineeCard = ({
@@ -37,7 +41,36 @@ export const NomineeCard = ({
   onVoteClick,
   isVoting = false,
   className = "",
+  hideVotes = false,
 }: NomineeCardProps) => {
+  // Get real-time vote count from Convex
+  const voteCount = useQuery(api.voting.getNomineeVotes, {
+    nomineeId: nominee.id,
+  });
+
+  // Use the API vote count if available, otherwise fall back to the prop
+  const displayVotes = voteCount !== undefined ? voteCount : nominee.votes;
+
+  // Animation for fresh votes
+  const [animateVote, setAnimateVote] = useState(false);
+
+  // Track last vote count to detect changes
+  const [lastVoteCount, setLastVoteCount] = useState(displayVotes);
+
+  useEffect(() => {
+    // If the vote count changes, trigger animation
+    if (
+      displayVotes !== undefined &&
+      lastVoteCount !== undefined &&
+      displayVotes > lastVoteCount
+    ) {
+      setAnimateVote(true);
+      const timer = setTimeout(() => setAnimateVote(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    setLastVoteCount(displayVotes);
+  }, [displayVotes, lastVoteCount]);
+
   const handleVoteClick = () => {
     if (onVoteClick && eventStatus === "running") {
       onVoteClick(nominee.id);
@@ -72,13 +105,35 @@ export const NomineeCard = ({
               <span className="text-muted-foreground text-xl">No Image</span>
             </div>
           )}
-          {nominee.votes !== undefined && nominee.votes > 0 && (
-            <Badge
-              variant="secondary"
-              className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm"
+          {!hideVotes && displayVotes !== undefined && displayVotes > 0 && (
+            <motion.div
+              animate={animateVote ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 0.5 }}
             >
-              {nominee.votes} {nominee.votes === 1 ? "Vote" : "Votes"}
-            </Badge>
+              <Badge
+                variant="secondary"
+                className={`absolute top-2 right-2 ${
+                  animateVote
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background/80"
+                } backdrop-blur-sm transition-colors duration-500`}
+              >
+                {displayVotes} {displayVotes === 1 ? "Vote" : "Votes"}
+              </Badge>
+            </motion.div>
+          )}
+          {animateVote && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            >
+              <div className="bg-primary/80 text-white p-3 rounded-full backdrop-blur-md">
+                <ThumbsUp className="h-8 w-8" />
+              </div>
+            </motion.div>
           )}
         </CardHeader>
         <CardContent className="flex-grow p-4">

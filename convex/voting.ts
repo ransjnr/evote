@@ -56,6 +56,7 @@ export const initializePayment = mutation({
     const paymentId = await ctx.db.insert("payments", {
       transactionId,
       amount: totalAmount,
+      voteCount: voteCount, // Store vote count explicitly
       status: "pending",
       eventId: args.eventId,
       paymentReference: "",
@@ -65,10 +66,9 @@ export const initializePayment = mutation({
     return {
       success: true,
       payment: {
-        _id: paymentId,
         transactionId,
         amount: totalAmount,
-        voteCount: voteCount, // Return this for client use
+        voteCount: voteCount,
       },
     };
   },
@@ -85,16 +85,6 @@ export const verifyPayment = mutation({
     voteCount: v.optional(v.number()), // Make voteCount optional
   },
   handler: async (ctx, args) => {
-    // Extract vote count from transaction ID
-    const voteCountMatch = args.transactionId.match(/vc(\d+)_/);
-    const voteCount =
-      args.voteCount ?? (voteCountMatch ? parseInt(voteCountMatch[1]) : 1);
-
-    // Validate vote count
-    if (voteCount <= 0 || !Number.isInteger(voteCount)) {
-      throw new ConvexError("Vote count must be a positive integer");
-    }
-
     // Find the payment record
     const payment = await ctx.db
       .query("payments")
@@ -111,13 +101,47 @@ export const verifyPayment = mutation({
       throw new ConvexError("Payment already processed");
     }
 
-    // In a real-world scenario, you would verify this with the payment provider's API
-    // For demo purposes, we'll just trust the paymentReference
+    // Extract vote count - prefer the stored value in the payment record,
+    // fallback to the argument, and finally use default of 1
+    const voteCount = payment.voteCount ?? args.voteCount ?? 1;
+
+    // Validate vote count
+    if (voteCount <= 0 || !Number.isInteger(voteCount)) {
+      throw new ConvexError("Vote count must be a positive integer");
+    }
+
+    // Verify the nominee, category and event still exist
+    const [nominee, category, event] = await Promise.all([
+      ctx.db.get(args.nomineeId),
+      ctx.db.get(args.categoryId),
+      ctx.db.get(args.eventId),
+    ]);
+
+    if (!nominee) throw new ConvexError("Nominee not found");
+    if (!category) throw new ConvexError("Category not found");
+    if (!event) throw new ConvexError("Event not found");
+
+    // Verify the event is still active
+    if (!event.isActive) {
+      throw new ConvexError("Event is no longer active");
+    }
+
+    const now = Date.now();
+    if (now < event.startDate || now > event.endDate) {
+      throw new ConvexError("Voting is no longer open for this event");
+    }
+
+    // In a real-world scenario, we'd verify the payment with Paystack's API
+    // This would involve a server-side call to Paystack's verify endpoint
+    // For example:
+    // const paystackVerification = await verifyWithPaystackAPI(args.paymentReference);
+    // if (!paystackVerification.success) throw new ConvexError("Payment verification failed");
 
     // Update payment status to succeeded
     await ctx.db.patch(payment._id, {
       status: "succeeded",
       paymentReference: args.paymentReference,
+      voteCount: voteCount, // Ensure vote count is recorded explicitly
     });
 
     // Record votes - one database entry per vote for accurate counting
@@ -136,11 +160,74 @@ export const verifyPayment = mutation({
       voteIds.push(voteId);
     }
 
+    // Get the total votes for this nominee
+    const nomineeVotes = await ctx.db
+      .query("votes")
+      .withIndex("by_nominee", (q) => q.eq("nomineeId", args.nomineeId))
+      .collect();
+
+    const totalVotes = nomineeVotes.length;
+
     return {
       success: true,
       voteIds,
-      totalVotes: voteCount,
+      totalVotes,
+      voteCount,
     };
+  },
+});
+
+// Get votes for a nominee
+export const getNomineeVotes = query({
+  args: {
+    nomineeId: v.id("nominees"),
+  },
+  handler: async (ctx, args) => {
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_nominee", (q) => q.eq("nomineeId", args.nomineeId))
+      .collect();
+
+    return votes.length;
+  },
+});
+
+// Get votes for a category
+export const getCategoryVotes = query({
+  args: {
+    categoryId: v.id("categories"),
+  },
+  handler: async (ctx, args) => {
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_category", (q) => q.eq("categoryId", args.categoryId))
+      .collect();
+
+    // Group votes by nominee
+    const votesByNominee = votes.reduce(
+      (acc, vote) => {
+        acc[vote.nomineeId] = (acc[vote.nomineeId] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return votesByNominee;
+  },
+});
+
+// Get votes for an event
+export const getEventVotes = query({
+  args: {
+    eventId: v.id("events"),
+  },
+  handler: async (ctx, args) => {
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
+      .collect();
+
+    return votes.length;
   },
 });
 
