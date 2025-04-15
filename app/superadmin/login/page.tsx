@@ -17,14 +17,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { ArrowRight, Lock, Mail, CheckCircle } from "lucide-react";
+import { ArrowRight, Lock, Mail, Shield, CheckCircle } from "lucide-react";
 
 // Define error type
 interface ConvexError {
   message: string;
 }
 
-export default function AdminLogin() {
+export default function SuperAdminLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,48 +50,21 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to log in with email:", email);
       const result = await loginAdmin({
         email,
         password,
       });
 
       if (result.success) {
-        // Detailed log of the admin data received from server
-        console.log("Login successful, full admin data:", result.admin);
-        console.log("Verification status:", result.admin.isVerified);
-
-        // Check if the admin account is verified
-        if (!result.admin.isVerified) {
-          console.log(
-            "Admin account is NOT verified, redirecting to verification page"
-          );
-          // If not verified, redirect to verification pending page instead of logging in
-          toast.info("Your account is pending verification by a super admin");
-
-          // Store minimal admin info in local storage for checking verification status later
-          const pendingAdminData = {
-            _id: result.admin._id,
-            email: result.admin.email,
-            name: result.admin.name,
-          };
-          console.log("Storing in localStorage:", pendingAdminData);
-
-          localStorage.setItem(
-            "pendingAdmin",
-            JSON.stringify(pendingAdminData)
-          );
-
-          // Delay redirect for better UX
-          setTimeout(() => {
-            router.push("/admin/verification-pending");
-          }, 1000);
+        // Check if the user is a super admin
+        if (result.admin.role !== "super_admin") {
+          toast.error("Access denied. This login is for Super Admins only.");
+          setIsLoading(false);
           return;
         }
 
-        console.log("Admin account IS verified, proceeding with login");
         // Add delay for visual feedback
-        toast.success("Login successful! Redirecting...");
+        toast.success("Super Admin login successful! Redirecting...");
 
         // Generate a simple token (in a real app, you'd use JWT or similar)
         const token = btoa(`${result.admin._id}:${Date.now()}`);
@@ -99,12 +72,11 @@ export default function AdminLogin() {
 
         // Delay redirect for better UX
         setTimeout(() => {
-          router.push("/admin/dashboard");
+          router.push("/superadmin/dashboard");
         }, 1000);
       }
     } catch (error: unknown) {
       const convexError = error as ConvexError;
-      console.error("Login error:", error);
       toast.error(convexError.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -115,7 +87,7 @@ export default function AdminLogin() {
     <div
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, #f9f9f9 0%, #f5f5f7 100%)",
+        background: "linear-gradient(135deg, #f0f4f9 0%, #e9ecef 100%)",
       }}
     >
       {/* Animated background elements */}
@@ -147,14 +119,23 @@ export default function AdminLogin() {
           onMouseLeave={() => setELogoHover(false)}
         >
           <span
-            className={`${eLogoHover ? "bg-indigo-600" : "bg-primary"} text-white p-1 rounded mr-1 transition-all duration-300 ease-in-out transform ${eLogoHover ? "scale-110" : "scale-100"}`}
+            className={`${
+              eLogoHover ? "bg-indigo-600" : "bg-primary"
+            } text-white p-1 rounded mr-1 transition-all duration-300 ease-in-out transform ${
+              eLogoHover ? "scale-110" : "scale-100"
+            }`}
           >
             e
           </span>
           <span
-            className={`transition-colors duration-300 ${eLogoHover ? "text-indigo-700" : "text-gray-800"}`}
+            className={`transition-colors duration-300 ${
+              eLogoHover ? "text-indigo-700" : "text-gray-800"
+            }`}
           >
             Vote
+          </span>
+          <span className="text-xs ml-2 bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
+            Super Admin
           </span>
         </Link>
       </div>
@@ -163,7 +144,7 @@ export default function AdminLogin() {
         {/* Login Card with subtle animations */}
         <Card className="backdrop-blur-sm bg-white/90 border border-gray-100 shadow-xl rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-2xl">
           <div
-            className="absolute h-1 top-0 left-0 right-0 bg-gradient-to-r from-primary via-indigo-500 to-primary"
+            className="absolute h-1 top-0 left-0 right-0 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600"
             style={{
               backgroundSize: "200% 100%",
               animation: "shimmer 2s infinite",
@@ -171,59 +152,65 @@ export default function AdminLogin() {
           ></div>
 
           <CardHeader className="space-y-1 pb-6">
-            <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-2 relative">
-              <div className="absolute inset-0 bg-primary/10 rounded-full animate-pulse"></div>
+            <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-2 relative bg-blue-50">
+              <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-pulse"></div>
               <div className="absolute inset-1 bg-white rounded-full flex items-center justify-center">
-                <Lock className="h-6 w-6 text-primary" />
+                <Shield className="h-6 w-6 text-blue-600" />
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-center text-gray-800">
-              Welcome Back
+              Super Admin Access
             </CardTitle>
             <CardDescription className="text-center text-gray-500">
-              Sign in to access your admin dashboard
+              Secure login for system administrators only
             </CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div
-                className={`space-y-2 transition-all duration-300 ${focused === "email" ? "scale-[1.02]" : ""}`}
+                className={`space-y-2 transition-all duration-300 ${
+                  focused === "email" ? "scale-[1.02]" : ""
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="email"
-                    className={`text-sm font-medium transition-colors duration-300 ${focused === "email" ? "text-primary" : "text-gray-700"}`}
+                    className={`text-sm font-medium transition-colors duration-300 ${
+                      focused === "email" ? "text-blue-600" : "text-gray-700"
+                    }`}
                   >
                     Email
                   </label>
                   {email && (
-                    <span className="text-xs text-primary flex items-center">
+                    <span className="text-xs text-blue-600 flex items-center">
                       <CheckCircle className="h-3 w-3 mr-1" /> Valid
                     </span>
                   )}
                 </div>
                 <div className="relative">
                   <Mail
-                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors duration-300 ${focused === "email" ? "text-primary" : "text-gray-400"}`}
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors duration-300 ${
+                      focused === "email" ? "text-blue-600" : "text-gray-400"
+                    }`}
                   />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@organization.com"
+                    placeholder="superadmin@organization.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocused("email")}
                     onBlur={() => setFocused(null)}
-                    className={`pl-10 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-primary/20 ${
+                    className={`pl-10 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-600/20 ${
                       focused === "email"
-                        ? "border-primary bg-white shadow-sm"
+                        ? "border-blue-600 bg-white shadow-sm"
                         : "border-gray-200 bg-gray-50/50"
                     }`}
                     required
                   />
                   <div
-                    className={`absolute bottom-0 left-0 h-0.5 bg-primary transform transition-all duration-300 ease-out ${
+                    className={`absolute bottom-0 left-0 h-0.5 bg-blue-600 transform transition-all duration-300 ease-out ${
                       focused === "email" ? "w-full" : "w-0"
                     }`}
                   ></div>
@@ -231,25 +218,31 @@ export default function AdminLogin() {
               </div>
 
               <div
-                className={`space-y-2 transition-all duration-300 ${focused === "password" ? "scale-[1.02]" : ""}`}
+                className={`space-y-2 transition-all duration-300 ${
+                  focused === "password" ? "scale-[1.02]" : ""
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="password"
-                    className={`text-sm font-medium transition-colors duration-300 ${focused === "password" ? "text-primary" : "text-gray-700"}`}
+                    className={`text-sm font-medium transition-colors duration-300 ${
+                      focused === "password" ? "text-blue-600" : "text-gray-700"
+                    }`}
                   >
                     Password
                   </label>
                   <Link
-                    href="/admin/forgot-password"
-                    className="text-xs text-primary hover:text-indigo-600 transition-colors"
+                    href="/superadmin/forgot-password"
+                    className="text-xs text-blue-600 hover:text-indigo-600 transition-colors"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <div className="relative">
                   <Lock
-                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors duration-300 ${focused === "password" ? "text-primary" : "text-gray-400"}`}
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors duration-300 ${
+                      focused === "password" ? "text-blue-600" : "text-gray-400"
+                    }`}
                   />
                   <Input
                     id="password"
@@ -259,19 +252,27 @@ export default function AdminLogin() {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setFocused("password")}
                     onBlur={() => setFocused(null)}
-                    className={`pl-10 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-primary/20 ${
+                    className={`pl-10 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-600/20 ${
                       focused === "password"
-                        ? "border-primary bg-white shadow-sm"
+                        ? "border-blue-600 bg-white shadow-sm"
                         : "border-gray-200 bg-gray-50/50"
                     }`}
                     required
                   />
                   <div
-                    className={`absolute bottom-0 left-0 h-0.5 bg-primary transform transition-all duration-300 ease-out ${
+                    className={`absolute bottom-0 left-0 h-0.5 bg-blue-600 transform transition-all duration-300 ease-out ${
                       focused === "password" ? "w-full" : "w-0"
                     }`}
                   ></div>
                 </div>
+              </div>
+
+              <div className="bg-amber-50 px-4 py-3 rounded-lg border border-amber-100 text-sm text-amber-800">
+                <p className="flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-amber-600" />
+                  This portal is restricted to authorized super administrators
+                  only.
+                </p>
               </div>
             </CardContent>
 
@@ -279,16 +280,12 @@ export default function AdminLogin() {
               <Button
                 type="submit"
                 className={`w-full rounded-lg relative overflow-hidden group transition-all duration-300 ease-out transform hover:-translate-y-[2px] ${
-                  formComplete
-                    ? "bg-primary hover:bg-primary/90"
-                    : "bg-gray-300"
+                  formComplete ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300"
                 } ${isLoading ? "cursor-not-allowed opacity-80" : ""}`}
-                disabled={isLoading || !formComplete}
+                disabled={!formComplete || isLoading}
               >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-400 to-primary-dark opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
-
                 {isLoading ? (
-                  <div className="flex items-center justify-center relative z-10">
+                  <div className="flex items-center">
                     <svg
                       className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                       xmlns="http://www.w3.org/2000/svg"
@@ -309,70 +306,36 @@ export default function AdminLogin() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Signing in...
+                    Authenticating...
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center relative z-10">
-                    <span>Sign in</span>
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
+                  <div className="flex items-center">
+                    Secure Login
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </div>
                 )}
               </Button>
 
-              <div className="relative py-3">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-white px-4 text-sm text-gray-500">
-                    or
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <div className="text-sm text-gray-600 mb-2">
-                  Don&apos;t have an account?
-                </div>
-                <Link
-                  href="/admin/register"
-                  className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-primary hover:text-white border border-primary rounded-lg hover:bg-primary transition-all duration-300 ease-out"
+              <p className="text-xs text-center text-gray-500">
+                Need help?{" "}
+                <a
+                  href="mailto:support@evote.com"
+                  className="text-blue-600 hover:text-blue-800"
                 >
-                  Register your department
+                  Contact Support
+                </a>
+                {" • "}
+                <Link
+                  href="/system/migrate"
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Fix Schema Issues
                 </Link>
-              </div>
+              </p>
             </CardFooter>
           </form>
         </Card>
       </div>
-
-      <div className="absolute bottom-4 text-center w-full text-gray-500 text-sm">
-        &copy; {new Date().getFullYear()} eVote Platform. All rights reserved.
-      </div>
-
-      {/* CSS Animations */}
-      <style jsx global>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-15px);
-          }
-        }
-        @keyframes shimmer {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-      `}</style>
     </div>
   );
 }

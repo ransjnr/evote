@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,14 @@ import {
   FileText,
   Link as LinkIcon,
   CheckCircle,
+  AlertTriangle,
+  ArrowLeft,
+  ShieldCheck,
+  UserCheck,
+  Shield,
+  Award,
+  Star,
+  LogIn,
 } from "lucide-react";
 
 // Define error type
@@ -53,6 +61,17 @@ export default function AdminRegister() {
   const [formComplete, setFormComplete] = useState(false);
   const login = useAuthStore((state) => state.login);
 
+  // State for the verification waiting modal
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [registeredAdminId, setRegisteredAdminId] = useState<string | null>(
+    null
+  );
+  const [dots, setDots] = useState("");
+  const [statusMessage, setStatusMessage] = useState(
+    "Processing registration..."
+  );
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+
   const { ref: adminFormRef, inView: adminFormInView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -69,6 +88,72 @@ export default function AdminRegister() {
 
   // Define isEmailTaken here before it's used in the effect below
   const isEmailTaken = checkEmail === true;
+
+  // Track verification status locally
+  const [adminVerified, setAdminVerified] = useState(false);
+
+  // Create a separate component to handle admin verification checking
+  const CheckAdminVerification = ({ adminId }: { adminId: string }) => {
+    // This query will only run in this component when adminId is available
+    const adminData = useQuery(api.auth.getAdmin, { adminId });
+
+    useEffect(() => {
+      if (adminData && !adminData.isVerified) {
+        // Redirect to verification pending page
+        router.push("/admin/verification-pending");
+      } else if (adminData && adminData.isVerified) {
+        // Show success toast and handle redirect to login
+        toast.success("🎉 Your account has been verified!");
+        setTimeout(() => {
+          router.push("/admin/login");
+        }, 2000);
+      }
+    }, [adminData]);
+
+    return null; // This component doesn't render anything
+  };
+
+  // Animation for the waiting dots
+  useEffect(() => {
+    if (showVerificationModal) {
+      const interval = setInterval(() => {
+        setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [showVerificationModal]);
+
+  // Timer for seconds elapsed
+  useEffect(() => {
+    if (showVerificationModal) {
+      const interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [showVerificationModal]);
+
+  // Rotate messages to keep the user engaged
+  useEffect(() => {
+    if (showVerificationModal) {
+      const messages = [
+        "Creating your department...",
+        "Setting up administrator account...",
+        "Preparing dashboard access...",
+        "Almost there, finalizing details...",
+        "Your account is being created...",
+        "We're excited to have you onboard!",
+        "Just a few moments more...",
+      ];
+
+      const interval = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        setStatusMessage(messages[randomIndex]);
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [showVerificationModal]);
 
   // Check if form is complete
   useEffect(() => {
@@ -162,64 +247,52 @@ export default function AdminRegister() {
     setStep(2);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!departmentName || !departmentSlug) {
-      toast.error("Please fill in all required department fields");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      // First create the admin account
-      const adminResult = await registerAdmin({
+      // Prepare admin data
+      const adminData = {
         email,
         password,
         name,
-        departmentId: departmentSlug, // Temporary ID, will be updated later
+        departmentId: departmentSlug,
         role: "department_admin",
-      });
+      };
 
-      if (adminResult.success) {
-        // Then create the department
-        const departmentResult = await createDepartment({
-          name: departmentName,
-          description: departmentDesc,
-          slug: departmentSlug,
-          adminId: adminResult.adminId,
-        });
+      // Register admin
+      const result = await registerAdmin(adminData);
 
-        if (departmentResult.success) {
-          toast.success("Registration successful! Redirecting...");
+      if (result.success) {
+        setRegisteredAdminId(result.adminId);
 
-          // Login the user automatically
-          const token = btoa(`${adminResult.adminId}:${Date.now()}`);
-          login(
-            {
-              _id: adminResult.adminId,
-              email,
-              name,
-              departmentId: departmentSlug, // Store the slug, not the ID
-              role: "department_admin",
-            },
-            token
-          );
+        // Store admin info in localStorage for verification page
+        localStorage.setItem(
+          "pendingAdmin",
+          JSON.stringify({
+            _id: result.adminId,
+            email: email,
+            name: name,
+          })
+        );
 
-          // Delay redirect for better UX
-          setTimeout(() => {
-            router.push("/admin/dashboard");
-          }, 1500);
-        }
+        // Show success toast
+        toast.success(
+          "Registration successful! Redirecting to verification page..."
+        );
+
+        // Delay redirect for better UX and to ensure localStorage is set
+        setTimeout(() => {
+          router.push("/admin/verification-pending");
+        }, 1500);
+      } else {
+        setIsLoading(false);
+        toast.error(result.message || "Registration failed!");
       }
-    } catch (error: unknown) {
-      const convexError = error as ConvexError;
-      toast.error(
-        convexError.message || "Registration failed. Please try again."
-      );
-    } finally {
+    } catch (error: any) {
       setIsLoading(false);
+      toast.error(error.message || "Registration failed!");
     }
   };
 
@@ -775,15 +848,23 @@ export default function AdminRegister() {
                 </div>
               </CardContent>
 
-              <CardFooter className="flex flex-col space-y-4 pt-2 pb-6 px-8">
+              <CardFooter className="flex flex-col space-y-4 pt-4">
+                <div className="bg-blue-50 px-4 py-3 rounded-lg border border-blue-100 text-sm text-blue-800 mb-2">
+                  <p className="flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-2 text-blue-600" />
+                    Your account will require verification by a super admin
+                    before you can log in.
+                  </p>
+                </div>
+
                 <Button
                   type="submit"
                   className={`w-full rounded-lg relative overflow-hidden group transition-all duration-300 ease-out transform hover:-translate-y-[2px] ${
                     formComplete
                       ? "bg-primary hover:bg-primary/90"
                       : "bg-gray-300"
-                  }`}
-                  disabled={isLoading || !formComplete}
+                  } ${isLoading ? "cursor-not-allowed opacity-80" : ""}`}
+                  disabled={!formComplete || isLoading}
                 >
                   <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-400 to-primary-dark opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
 
@@ -818,9 +899,18 @@ export default function AdminRegister() {
                     </div>
                   )}
                 </Button>
-                <div className="text-xs text-center text-gray-500 mt-2">
-                  By registering, you agree to our Terms of Service and Privacy
-                  Policy
+
+                <div className="flex items-center justify-center mt-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setStep(1)}
+                    disabled={isLoading}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Account Details
+                  </Button>
                 </div>
               </CardFooter>
             </form>
@@ -855,6 +945,17 @@ export default function AdminRegister() {
           }
         }
       `}</style>
+
+      {/* Verification Waiting Modal */}
+      {showVerificationModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <AnimatePresence mode="wait">
+            {registeredAdminId && (
+              <CheckAdminVerification adminId={registeredAdminId} />
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

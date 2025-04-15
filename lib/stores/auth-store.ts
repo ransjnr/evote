@@ -9,6 +9,7 @@ type Admin = {
   name: string;
   departmentId: string; // This actually stores the department slug, not the ID
   role: "super_admin" | "department_admin";
+  isVerified: boolean;
 };
 
 interface AuthState {

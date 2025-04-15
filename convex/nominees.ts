@@ -2,6 +2,14 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
+// Generates an abbreviation from the department name (takes first letter of each word)
+function generateAbbreviation(name: string): string {
+  return name
+    .split(/\s+/) // Split by whitespace
+    .map((word) => word.charAt(0).toUpperCase()) // Get first char of each word, uppercase
+    .join(""); // Join them together
+}
+
 // Create a new nominee
 export const createNominee = mutation({
   args: {
@@ -19,6 +27,58 @@ export const createNominee = mutation({
       throw new ConvexError("Category not found");
     }
 
+    // Get the event to get the department
+    const event = await ctx.db.get(category.eventId);
+    if (!event) {
+      throw new ConvexError("Event not found");
+    }
+
+    // Get the department name to generate abbreviation
+    const department = await ctx.db.get(event.departmentId);
+    if (!department) {
+      throw new ConvexError("Department not found");
+    }
+
+    // Generate abbreviation from department name
+    const deptAbbrev = generateAbbreviation(department.name);
+
+    // Get current count of nominees in this department to generate a unique 3-digit number
+    const allNomineesInDept = await ctx.db
+      .query("nominees")
+      .filter(
+        (q) =>
+          q.gt(q.field("code"), deptAbbrev) &&
+          q.lt(q.field("code"), deptAbbrev + "\uffff")
+      )
+      .collect();
+
+    // Generate a 3-digit number, starting from 001
+    let codeNum = (allNomineesInDept.length + 1).toString().padStart(3, "0");
+
+    // Combine to form the code
+    const nomineeCode = `${deptAbbrev}${codeNum}`;
+
+    // Check if this code already exists (very unlikely but possible if abbreviations overlap)
+    let codeExists = await ctx.db
+      .query("nominees")
+      .withIndex("by_code", (q) => q.eq("code", nomineeCode))
+      .first();
+
+    // If code already exists, try incrementing until we find a unique one
+    let attempts = 0;
+    while (codeExists && attempts < 100) {
+      codeNum = (parseInt(codeNum) + 1).toString().padStart(3, "0");
+      const newCode = `${deptAbbrev}${codeNum}`;
+      codeExists = await ctx.db
+        .query("nominees")
+        .withIndex("by_code", (q) => q.eq("code", newCode))
+        .first();
+      attempts++;
+    }
+
+    // Final code to use
+    const finalCode = `${deptAbbrev}${codeNum}`;
+
     // Insert the new nominee
     const nomineeId = await ctx.db.insert("nominees", {
       name: args.name,
@@ -26,11 +86,12 @@ export const createNominee = mutation({
       imageUrl: args.imageUrl,
       videoUrl: args.videoUrl,
       categoryId: args.categoryId,
+      code: finalCode, // Add the automatically generated code
       createdBy: args.adminId,
       createdAt: Date.now(),
     });
 
-    return { success: true, nomineeId };
+    return { success: true, nomineeId, code: finalCode };
   },
 });
 
@@ -124,6 +185,25 @@ export const listNomineesByDepartment = query({
   },
 });
 
+// Get nominee by code (for USSD integration)
+export const getNomineeByCode = query({
+  args: {
+    code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const nominee = await ctx.db
+      .query("nominees")
+      .withIndex("by_code", (q) => q.eq("code", args.code))
+      .first();
+
+    if (!nominee) {
+      throw new ConvexError("Nominee not found with the provided code");
+    }
+
+    return nominee;
+  },
+});
+
 // Update a nominee
 export const updateNominee = mutation({
   args: {
@@ -139,7 +219,7 @@ export const updateNominee = mutation({
       throw new ConvexError("Nominee not found");
     }
 
-    // Update the nominee
+    // Update the nominee (note: we don't allow updating the code)
     await ctx.db.patch(args.nomineeId, {
       ...(args.name && { name: args.name }),
       ...(args.description !== undefined && { description: args.description }),

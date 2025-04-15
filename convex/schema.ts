@@ -9,6 +9,11 @@ export default defineSchema({
     name: v.string(),
     departmentId: v.string(),
     role: v.union(v.literal("super_admin"), v.literal("department_admin")),
+    isVerified: v.boolean(),
+    verifiedBy: v.optional(v.id("admins")),
+    verifiedAt: v.optional(v.number()),
+    revokedBy: v.optional(v.id("admins")),
+    revokedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_email", ["email"]),
 
@@ -51,9 +56,12 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     videoUrl: v.optional(v.string()),
     categoryId: v.id("categories"),
+    code: v.string(),
     createdBy: v.id("admins"),
     createdAt: v.number(),
-  }).index("by_category", ["categoryId"]),
+  })
+    .index("by_category", ["categoryId"])
+    .index("by_code", ["code"]),
 
   // Votes table
   votes: defineTable({

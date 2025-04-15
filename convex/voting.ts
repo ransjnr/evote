@@ -362,3 +362,259 @@ export const getPaymentsByDepartment = query({
     return allPayments;
   },
 });
+
+// Initialize a payment using a nominee code (for USSD integration)
+export const initializePaymentByCode = mutation({
+  args: {
+    nomineeCode: v.string(),
+    voteCount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Default to 1 vote if not specified
+    const voteCount = args.voteCount ?? 1;
+
+    // Validate vote count
+    if (voteCount <= 0 || !Number.isInteger(voteCount)) {
+      throw new ConvexError("Vote count must be a positive integer");
+    }
+
+    // Find the nominee by code
+    const nominee = await ctx.db
+      .query("nominees")
+      .withIndex("by_code", (q) => q.eq("code", args.nomineeCode))
+      .first();
+
+    if (!nominee) {
+      throw new ConvexError(`Nominee with code ${args.nomineeCode} not found`);
+    }
+
+    // Get the category
+    const category = await ctx.db.get(nominee.categoryId);
+    if (!category) {
+      throw new ConvexError("Category not found");
+    }
+
+    // Get the event
+    const event = await ctx.db.get(category.eventId);
+    if (!event) {
+      throw new ConvexError("Event not found");
+    }
+
+    // Validate event is active
+    if (!event.isActive) {
+      throw new ConvexError("Event is not active");
+    }
+
+    const now = Date.now();
+    if (now < event.startDate || now > event.endDate) {
+      throw new ConvexError("Voting is not open for this event");
+    }
+
+    // Create a transaction ID (unique reference) that includes the vote count and code
+    const transactionId = `vote_${args.nomineeCode}_${Date.now()}_vc${voteCount}_${Math.random().toString(36).substring(2, 5)}`;
+
+    // Calculate total amount based on vote price and count
+    const totalAmount = event.votePrice * voteCount;
+
+    // Create pending payment in the database
+    const paymentId = await ctx.db.insert("payments", {
+      transactionId,
+      amount: totalAmount,
+      voteCount: voteCount,
+      status: "pending",
+      eventId: event._id,
+      paymentReference: "",
+      createdAt: Date.now(),
+    });
+
+    // Return the payment info with nominee details for confirmation
+    return {
+      success: true,
+      payment: {
+        transactionId,
+        amount: totalAmount,
+        voteCount: voteCount,
+      },
+      nominee: {
+        id: nominee._id,
+        name: nominee.name,
+        code: nominee.code,
+        categoryId: nominee.categoryId,
+        eventId: event._id,
+      },
+    };
+  },
+});
+
+// Verify and record a payment by code (for USSD integration)
+export const verifyPaymentByCode = mutation({
+  args: {
+    transactionId: v.string(),
+    paymentReference: v.string(),
+    nomineeCode: v.string(),
+    voteCount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Find the payment record
+    const payment = await ctx.db
+      .query("payments")
+      .withIndex("by_transaction", (q) =>
+        q.eq("transactionId", args.transactionId)
+      )
+      .first();
+
+    if (!payment) {
+      throw new ConvexError("Payment not found");
+    }
+
+    if (payment.status === "succeeded") {
+      throw new ConvexError("Payment already processed");
+    }
+
+    // Extract vote count - prefer the stored value in the payment record,
+    // fallback to the argument, and finally use default of 1
+    const voteCount = payment.voteCount ?? args.voteCount ?? 1;
+
+    // Find the nominee by code
+    const nominee = await ctx.db
+      .query("nominees")
+      .withIndex("by_code", (q) => q.eq("code", args.nomineeCode))
+      .first();
+
+    if (!nominee) {
+      throw new ConvexError(`Nominee with code ${args.nomineeCode} not found`);
+    }
+
+    // Get the category
+    const category = await ctx.db.get(nominee.categoryId);
+    if (!category) {
+      throw new ConvexError("Category not found");
+    }
+
+    // Get the event (we already have the eventId from payment record)
+    const event = await ctx.db.get(payment.eventId);
+    if (!event) {
+      throw new ConvexError("Event not found");
+    }
+
+    // Verify the event is still active
+    if (!event.isActive) {
+      throw new ConvexError("Event is no longer active");
+    }
+
+    const now = Date.now();
+    if (now < event.startDate || now > event.endDate) {
+      throw new ConvexError("Voting is no longer open for this event");
+    }
+
+    // Update payment status to succeeded
+    await ctx.db.patch(payment._id, {
+      status: "succeeded",
+      paymentReference: args.paymentReference,
+      voteCount: voteCount,
+    });
+
+    // Record votes - one database entry per vote for accurate counting
+    const voteIds = [];
+
+    for (let i = 0; i < voteCount; i++) {
+      const voteId = await ctx.db.insert("votes", {
+        nomineeId: nominee._id,
+        categoryId: category._id,
+        eventId: event._id,
+        transactionId: args.transactionId,
+        amount: payment.amount / voteCount,
+        createdAt: Date.now(),
+      });
+
+      voteIds.push(voteId);
+    }
+
+    // Get the total votes for this nominee
+    const nomineeVotes = await ctx.db
+      .query("votes")
+      .withIndex("by_nominee", (q) => q.eq("nomineeId", nominee._id))
+      .collect();
+
+    const totalVotes = nomineeVotes.length;
+
+    return {
+      success: true,
+      voteIds,
+      totalVotes,
+      voteCount,
+      nominee: {
+        id: nominee._id,
+        name: nominee.name,
+        code: nominee.code,
+      },
+    };
+  },
+});
+
+// Get nominee information by code (for USSD integration)
+export const getNomineeByCode = query({
+  args: {
+    code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find the nominee by code
+    const nominee = await ctx.db
+      .query("nominees")
+      .withIndex("by_code", q => q.eq("code", args.code))
+      .first();
+
+    if (!nominee) {
+      throw new ConvexError(`Nominee with code ${args.code} not found`);
+    }
+
+    // Get the category to get the event info
+    const category = await ctx.db.get(nominee.categoryId);
+    if (!category) {
+      throw new ConvexError("Category not found");
+    }
+
+    // Get the event
+    const event = await ctx.db.get(category.eventId);
+    if (!event) {
+      throw new ConvexError("Event not found");
+    }
+
+    // Get the department
+    const department = await ctx.db.get(event.departmentId);
+
+    // Get vote count for this nominee
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_nominee", q => q.eq("nomineeId", nominee._id))
+      .collect();
+
+    return {
+      nominee: {
+        id: nominee._id,
+        name: nominee.name,
+        code: nominee.code,
+        description: nominee.description,
+        voteCount: votes.length,
+      },
+      category: {
+        id: category._id,
+        name: category.name,
+        type: category.type,
+      },
+      event: {
+        id: event._id,
+        name: event.name,
+        votePrice: event.votePrice,
+        isActive: event.isActive,
+        startDate: event.startDate,
+        endDate: event.endDate,
+      },
+      department: department ? {
+        id: department._id,
+        name: department.name,
+        slug: department.slug,
+      } : null,
+    };
+  },
+});

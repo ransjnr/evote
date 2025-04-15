@@ -70,6 +70,7 @@ export const registerAdmin = mutation({
       name: args.name,
       departmentId: args.departmentId,
       role: args.role,
+      isVerified: args.role === "super_admin" ? true : false, // Super admins are auto-verified
       createdAt: Date.now(),
     });
 
@@ -101,6 +102,13 @@ export const loginAdmin = mutation({
       throw new ConvexError("Invalid email or password");
     }
 
+    // Check if the admin account is verified (except for super_admin)
+    if (admin.role !== "super_admin" && !admin.isVerified) {
+      throw new ConvexError(
+        "Your account is pending verification by a super admin"
+      );
+    }
+
     // Return user data (excluding password hash)
     return {
       success: true,
@@ -110,6 +118,7 @@ export const loginAdmin = mutation({
         name: admin.name,
         departmentId: admin.departmentId,
         role: admin.role,
+        isVerified: admin.isVerified,
       },
     };
   },
@@ -133,6 +142,8 @@ export const getAdmin = query({
       name: admin.name,
       departmentId: admin.departmentId,
       role: admin.role,
+      isVerified: admin.isVerified,
+      verifiedAt: admin.verifiedAt,
     };
   },
 });
@@ -212,6 +223,7 @@ export const updateAdminProfile = mutation({
         email: args.email,
         departmentId: admin.departmentId,
         role: admin.role,
+        isVerified: admin.isVerified,
       },
     };
   },
@@ -249,5 +261,118 @@ export const updateAdminPassword = mutation({
     });
 
     return { success: true };
+  },
+});
+
+// Get all pending admin verifications (for super admins)
+export const getPendingAdminVerifications = query({
+  args: {},
+  handler: async (ctx) => {
+    const pendingAdmins = await ctx.db
+      .query("admins")
+      .filter((q) => q.eq(q.field("isVerified"), false))
+      .collect();
+
+    // Return admins without password hashes
+    return pendingAdmins.map((admin) => ({
+      _id: admin._id,
+      email: admin.email,
+      name: admin.name,
+      departmentId: admin.departmentId,
+      role: admin.role,
+      createdAt: admin.createdAt,
+    }));
+  },
+});
+
+// Verify an admin account (super admin only)
+export const verifyAdminAccount = mutation({
+  args: {
+    adminId: v.id("admins"),
+    superAdminId: v.id("admins"),
+  },
+  handler: async (ctx, args) => {
+    // Get the super admin who is verifying
+    const superAdmin = await ctx.db.get(args.superAdminId);
+    if (!superAdmin || superAdmin.role !== "super_admin") {
+      throw new ConvexError(
+        "Unauthorized: Only super admins can verify accounts"
+      );
+    }
+
+    // Get the admin to be verified
+    const admin = await ctx.db.get(args.adminId);
+    if (!admin) {
+      throw new ConvexError("Admin not found");
+    }
+
+    // Update the admin to be verified
+    await ctx.db.patch(args.adminId, {
+      isVerified: true,
+      verifiedBy: args.superAdminId,
+      verifiedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Revoke admin verification (super admin only)
+export const revokeAdminVerification = mutation({
+  args: {
+    adminId: v.id("admins"),
+    superAdminId: v.id("admins"),
+  },
+  handler: async (ctx, args) => {
+    // Get the super admin who is revoking
+    const superAdmin = await ctx.db.get(args.superAdminId);
+    if (!superAdmin || superAdmin.role !== "super_admin") {
+      throw new ConvexError(
+        "Unauthorized: Only super admins can revoke verification"
+      );
+    }
+
+    // Get the admin to be unverified
+    const admin = await ctx.db.get(args.adminId);
+    if (!admin) {
+      throw new ConvexError("Admin not found");
+    }
+
+    // Cannot revoke verification for super admins
+    if (admin.role === "super_admin") {
+      throw new ConvexError("Cannot revoke verification for super admins");
+    }
+
+    // We'll just set isVerified to false
+    // But maintain the historical record of when/who verified them
+    // This avoids schema validation errors with null values
+    await ctx.db.patch(args.adminId, {
+      isVerified: false,
+      // Add a field to track revocation info instead of removing existing fields
+      revokedBy: args.superAdminId,
+      revokedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Get all admins (for super admins)
+export const getAllAdmins = query({
+  args: {},
+  handler: async (ctx) => {
+    const admins = await ctx.db.query("admins").collect();
+
+    // Return admins without password hashes
+    return admins.map((admin) => ({
+      _id: admin._id,
+      email: admin.email,
+      name: admin.name,
+      departmentId: admin.departmentId,
+      role: admin.role,
+      isVerified: admin.isVerified,
+      verifiedAt: admin.verifiedAt,
+      createdAt: admin.createdAt,
+    }));
   },
 });

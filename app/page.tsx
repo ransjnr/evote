@@ -114,7 +114,7 @@ export default function Home() {
                   Explore Events
                 </Button>
               </Link>
-              <Link href="/admin/login">
+              {/* <Link href="/admin/login">
                 <Button
                   size="lg"
                   variant="gradient"
@@ -123,7 +123,7 @@ export default function Home() {
                   Admin Dashboard
                   <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
 

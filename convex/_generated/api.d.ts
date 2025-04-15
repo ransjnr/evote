@@ -17,6 +17,7 @@ import type * as auth from "../auth.js";
 import type * as categories from "../categories.js";
 import type * as departments from "../departments.js";
 import type * as events from "../events.js";
+import type * as migrations from "../migrations.js";
 import type * as nominees from "../nominees.js";
 import type * as voting from "../voting.js";
 
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   departments: typeof departments;
   events: typeof events;
+  migrations: typeof migrations;
   nominees: typeof nominees;
   voting: typeof voting;
 }>;

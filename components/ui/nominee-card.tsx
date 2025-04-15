@@ -25,6 +25,7 @@ type NomineeCardProps = {
     imageUrl?: string | null;
     description?: string | null;
     votes?: number;
+    code?: string;
   };
   eventStatus: "running" | "ended" | "upcoming" | "loading";
   votePrice: number;
@@ -32,6 +33,7 @@ type NomineeCardProps = {
   isVoting?: boolean;
   className?: string;
   hideVotes?: boolean;
+  showCode?: boolean;
 };
 
 export const NomineeCard = ({
@@ -42,6 +44,7 @@ export const NomineeCard = ({
   isVoting = false,
   className = "",
   hideVotes = false,
+  showCode = false,
 }: NomineeCardProps) => {
   // Get real-time vote count from Convex
   const voteCount = useQuery(api.voting.getNomineeVotes, {
@@ -142,6 +145,13 @@ export const NomineeCard = ({
             <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
               {nominee.description}
             </p>
+          )}
+          {showCode && nominee.code && (
+            <div className="mt-2">
+              <span className="text-xs bg-primary/10 text-primary font-mono px-2 py-1 rounded inline-block">
+                Code: {nominee.code}
+              </span>
+            </div>
           )}
         </CardContent>
         <CardFooter className="p-4 pt-0">

@@ -270,77 +270,92 @@ export default function NomineeDetail() {
         </Card>
       ) : (
         // View Mode
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Nominee Image/Media */}
-          <Card className="md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
             <CardHeader>
-              <CardTitle>Media</CardTitle>
+              <CardTitle>Nominee Details</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {nominee.imageUrl ? (
-                  <div className="aspect-square w-full overflow-hidden rounded-md">
-                    <img
-                      src={nominee.imageUrl}
-                      alt={nominee.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-square w-full bg-gray-100 flex items-center justify-center rounded-md">
-                    <span className="text-gray-400">No Image Available</span>
-                  </div>
-                )}
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-gray-500 font-medium">Name</p>
+                <p>{nominee.name}</p>
+              </div>
 
-                {nominee.videoUrl && (
-                  <div className="mt-4">
-                    <h3 className="font-medium mb-2">Video</h3>
-                    <a
-                      href={nominee.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      View Video
-                    </a>
-                  </div>
-                )}
+              {nominee.description && (
+                <div className="space-y-2">
+                  <p className="text-gray-500 font-medium">Description</p>
+                  <p>{nominee.description}</p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-gray-500 font-medium">USSD Code</p>
+                <div className="flex items-center space-x-2">
+                  <span className="inline-block bg-primary/10 text-primary font-mono text-lg px-4 py-2 rounded-md border border-primary/20">
+                    {nominee.code}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(nominee.code);
+                      toast.success("Code copied to clipboard!");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  This code can be used for USSD voting integration. Share it
+                  with voters to make voting easier.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-gray-500 font-medium">Vote Count</p>
+                <p className="text-2xl font-bold">{voteCount} votes</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Nominee Details */}
-          <Card className="md:col-span-2">
+          <Card>
             <CardHeader>
-              <CardTitle>Details</CardTitle>
+              <CardTitle>Media</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-medium mb-1">Description</h3>
-                <p className="text-gray-600">
-                  {nominee.description || "No description provided"}
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-medium mb-1">Category</h3>
-                  <p>{category.name}</p>
+            <CardContent className="space-y-6">
+              {nominee.imageUrl ? (
+                <div className="space-y-2">
+                  <p className="text-gray-500 font-medium">Image</p>
+                  <div className="relative aspect-video bg-gray-100 rounded-md overflow-hidden">
+                    <img
+                      src={nominee.imageUrl}
+                      alt={nominee.name}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium mb-1">Event</h3>
-                  <p>{event.name}</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-gray-500 font-medium">Image</p>
+                  <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center">
+                    <p className="text-gray-400">No image available</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <Separator />
-
-              <div>
-                <h3 className="font-medium mb-1">Vote Count</h3>
-                <p className="text-2xl font-bold">{voteCount}</p>
-              </div>
+              {nominee.videoUrl && (
+                <div className="space-y-2">
+                  <p className="text-gray-500 font-medium">Video</p>
+                  <a
+                    href={nominee.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {nominee.videoUrl}
+                  </a>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -75,28 +75,36 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       // and we haven't already tried to create the department
       if (
         admin?.departmentId &&
-        department === undefined &&
+        (department === undefined || isDepartmentError) &&
         !isCreatingDepartment &&
         !departmentCreated &&
         allDepartments !== undefined // Make sure we've loaded all departments
       ) {
+        console.log(
+          "Department not found or error loading department - attempting to fix"
+        );
+        console.log("Admin departmentId:", admin.departmentId);
+        console.log("All departments:", allDepartments);
+
         // Check if any department with this slug already exists
         const existingDepartment = allDepartments.find(
           (dept) => dept.slug === admin.departmentId
         );
 
         if (!existingDepartment) {
+          console.log("No matching department found, creating one");
           setIsCreatingDepartment(true);
 
           try {
             const result = await createDepartment({
-              name: "Auto-Created Department",
+              name: `Department for ${admin.name}`,
               description: "Auto-created to fix missing department issue",
               slug: admin.departmentId,
               adminId: admin._id,
             });
 
             if (result.success) {
+              console.log("Department created successfully:", result);
               setDepartmentCreated(true);
               toast.success(
                 "Department created successfully. System will now load correctly."
@@ -107,10 +115,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               }, 1500);
             }
           } catch (error: any) {
+            console.error("Failed to create department:", error);
             toast.error(error.message || "Failed to create department");
+            // Add a way for the user to bypass this error in extreme cases
+            const bypassError = window.confirm(
+              "There was an error creating the department. Would you like to bypass this check and continue anyway? (This may cause some features to not work properly)"
+            );
+            if (bypassError) {
+              // Set a temporary bypass flag in session storage
+              sessionStorage.setItem("bypass_department_check", "true");
+              window.location.reload();
+            }
           } finally {
             setIsCreatingDepartment(false);
           }
+        } else {
+          console.log(
+            "Matching department found but query failed:",
+            existingDepartment
+          );
+          // Department exists but query still fails - this suggests a deeper issue
+          toast.error(
+            "Department exists but couldn't be loaded. Try refreshing the page."
+          );
         }
       }
     };
@@ -134,7 +161,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   // Redirect to login if not authenticated and not on login/register pages
   useEffect(() => {
-    const publicRoutes = ["/admin/login", "/admin/register"];
+    const publicRoutes = [
+      "/admin/login",
+      "/admin/register",
+      "/admin/verification-pending",
+      "/admin/registration-success",
+    ];
 
     // Give browser time to rehydrate the Zustand store from localStorage
     const timer = setTimeout(() => {
@@ -147,16 +179,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [isAuthenticated, pathname, router]);
 
-  // Skip layout for login and register pages
-  if (pathname === "/admin/login" || pathname === "/admin/register") {
+  // Skip layout for login, register, and verification-related pages
+  if (
+    pathname === "/admin/login" ||
+    pathname === "/admin/register" ||
+    pathname === "/admin/verification-pending" ||
+    pathname === "/admin/registration-success"
+  ) {
     return <>{children}</>;
   }
 
   // If still loading or not authenticated and trying to access protected routes, show loading
   if (
     isLoading ||
-    isCreatingDepartment || // Also show loading when creating department
-    isDepartmentError || // Show loading when department has an error and we're trying to fix it
+    (isCreatingDepartment &&
+      !sessionStorage.getItem("bypass_department_check")) ||
+    (isDepartmentError && !sessionStorage.getItem("bypass_department_check")) ||
     (!isAuthenticated &&
       pathname !== "/admin/login" &&
       pathname !== "/admin/register")
@@ -181,6 +219,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           {(isCreatingDepartment || isDepartmentError) && (
             <div className="flex justify-center mt-4">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
+          )}
+
+          {/* Add emergency fix button if department errors persist */}
+          {isDepartmentError && (
+            <div className="mt-6">
+              <p className="text-sm text-amber-600 mb-2">
+                If this issue persists, you can try our manual fix:
+              </p>
+              <Button
+                variant="outline"
+                className="mt-2"
+                onClick={() => router.push("/admin/fix-department")}
+              >
+                Go to Department Fix Page
+              </Button>
             </div>
           )}
         </div>
