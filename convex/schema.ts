@@ -37,6 +37,12 @@ export default defineSchema({
     isActive: v.boolean(),
     createdBy: v.id("admins"),
     createdAt: v.number(),
+    // Ticket-related fields
+    hasTicketing: v.optional(v.boolean()),
+    location: v.optional(v.string()),
+    maxCapacity: v.optional(v.number()),
+    ticketSalesStartDate: v.optional(v.number()),
+    ticketSalesEndDate: v.optional(v.number()),
   }).index("by_department", ["departmentId"]),
 
   // Categories table
@@ -93,4 +99,65 @@ export default defineSchema({
   })
     .index("by_transaction", ["transactionId"])
     .index("by_event", ["eventId"]),
+
+  // Ticket types table
+  ticket_types: defineTable({
+    name: v.string(), // e.g., "VIP", "Regular", "Early Bird"
+    eventId: v.id("events"),
+    price: v.number(),
+    capacity: v.number(),
+    remainingCapacity: v.number(),
+    benefits: v.optional(v.string()),
+    isActive: v.boolean(),
+    createdBy: v.id("admins"),
+    createdAt: v.number(),
+  }).index("by_event", ["eventId"]),
+
+  // Ticket reservations table
+  ticket_reservations: defineTable({
+    ticketTypeId: v.id("ticket_types"),
+    eventId: v.id("events"),
+    quantity: v.number(),
+    buyerName: v.string(),
+    buyerEmail: v.string(),
+    buyerPhone: v.string(),
+    isPaid: v.boolean(),
+    paymentMethod: v.optional(v.string()),
+    transactionId: v.optional(v.string()),
+    isCheckedIn: v.boolean(),
+    ticketCode: v.string(),
+    qrCodeUrl: v.optional(v.string()),
+    checkedInAt: v.optional(v.number()),
+    ticketSentEmail: v.boolean(),
+    ticketSentSms: v.boolean(),
+    totalAmount: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_ticket_type", ["ticketTypeId"])
+    .index("by_ticket_code", ["ticketCode"])
+    .index("by_buyer_email", ["buyerEmail"])
+    .index("by_transaction", ["transactionId"]),
+
+  // Check-in log table
+  check_in_logs: defineTable({
+    reservationId: v.id("ticket_reservations"),
+    eventId: v.id("events"),
+    ticketCode: v.string(),
+    scannedBy: v.id("admins"),
+    scannedAt: v.number(),
+    status: v.union(
+      v.literal("success"),
+      v.literal("already_checked_in"),
+      v.literal("invalid_ticket"),
+      v.literal("wrong_event")
+    ),
+  }).index("by_event", ["eventId"]),
+
+  // Ticket QR codes table
+  ticket_qrcodes: defineTable({
+    reservationId: v.id("ticket_reservations"),
+    qrCodeData: v.string(), // JSON stringified data
+    createdAt: v.string(),
+  }).index("by_reservation_id", ["reservationId"]),
 });
