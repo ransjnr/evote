@@ -159,6 +159,24 @@
   animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Tutorial system animations */
+@keyframes pulse-highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+  }
+}
+
+.tutorial-highlight-pulse {
+  position: relative;
+  animation: pulse-highlight 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  z-index: 1000;
+  border-radius: var(--radius);
+  outline: 2px solid var(--primary);
+}
+
 /* Transitions for hover effects */
 .transition-transform {
   transition-property: transform;

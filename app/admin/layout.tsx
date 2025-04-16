@@ -19,8 +19,12 @@ import {
   Building,
   LogOut,
   Trophy,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { TutorialMenu } from "@/components/ui/tutorial/tutorial-menu";
+import { WelcomeTutorial } from "@/components/ui/tutorial/welcome-tutorial";
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -427,6 +431,21 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 Department
               </Button>
             </Link>
+            <Link href="/admin/tutorials">
+              <Button
+                variant={
+                  pathname.includes("/admin/tutorials") ? "secondary" : "ghost"
+                }
+                className={`w-full justify-start rounded-lg text-sm font-medium hover:bg-indigo-50 ${
+                  pathname.includes("/admin/tutorials")
+                    ? "bg-indigo-50 text-primary shadow-sm hover:bg-indigo-100"
+                    : "text-gray-700"
+                }`}
+              >
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Tutorials
+              </Button>
+            </Link>
           </div>
 
           <div className="pt-6 mt-6 border-t border-gray-100">
@@ -482,6 +501,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 year: "numeric",
               })}
             </div>
+            <TutorialMenu className="mr-4" />
             <div className="flex items-center space-x-4 border-l border-gray-100 pl-4">
               <div className="text-sm font-medium text-gray-800">
                 {admin?.name}
@@ -498,6 +518,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {/* Main content */}
         <main className="flex-1 p-6 overflow-auto bg-gray-50">{children}</main>
       </div>
+
+      {/* Welcome tutorial for new users */}
+      <WelcomeTutorial />
     </div>
   );
 }

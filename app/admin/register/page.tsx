@@ -283,9 +283,9 @@ export default function AdminRegister() {
         );
 
         // Delay redirect for better UX and to ensure localStorage is set
-        setTimeout(() => {
+          setTimeout(() => {
           router.push("/admin/verification-pending");
-        }, 1500);
+          }, 1500);
       } else {
         setIsLoading(false);
         toast.error(result.message || "Registration failed!");

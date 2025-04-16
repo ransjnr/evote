@@ -17,9 +17,12 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { TutorialMenu } from "@/components/ui/tutorial/tutorial-menu";
+import { WelcomeTutorial } from "@/components/ui/tutorial/welcome-tutorial";
 
 export default function SuperAdminLayout({
   children,
@@ -103,6 +106,12 @@ export default function SuperAdminLayout({
       href: "/superadmin/settings",
       icon: Settings,
       current: pathname === "/superadmin/settings",
+    },
+    {
+      name: "Tutorials",
+      href: "/superadmin/tutorials",
+      icon: HelpCircle,
+      current: pathname === "/superadmin/tutorials",
     },
   ];
 
@@ -379,12 +388,20 @@ export default function SuperAdminLayout({
             "pt-16 lg:pt-0"
           )}
         >
+          {/* Desktop header with tutorial menu */}
+          <div className="bg-white border-b border-gray-200 hidden lg:flex items-center justify-end h-16 px-6">
+            <TutorialMenu className="mr-3" />
+          </div>
+
           <main className="flex-1">
             <div className="py-6">
               <div className="mx-auto px-4 sm:px-6 md:px-8">{children}</div>
             </div>
           </main>
         </div>
+
+        {/* Welcome tutorial */}
+        <WelcomeTutorial />
       </div>
     </TooltipProvider>
   );
