@@ -32,7 +32,16 @@ export default function AdminLogin() {
   const [focused, setFocused] = useState<string | null>(null);
   const [eLogoHover, setELogoHover] = useState(false);
   const [formComplete, setFormComplete] = useState(false);
-  const login = useAuthStore((state) => state.login);
+  const { login, isAuthenticated } = useAuthStore();
+  const loginAdmin = useMutation(api.auth.loginAdmin);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("Already authenticated, redirecting to dashboard");
+      router.replace("/admin/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   // Check if form is complete
   useEffect(() => {
@@ -42,8 +51,6 @@ export default function AdminLogin() {
       setFormComplete(false);
     }
   }, [email, password]);
-
-  const loginAdmin = useMutation(api.auth.loginAdmin);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,10 +89,8 @@ export default function AdminLogin() {
             JSON.stringify(pendingAdminData)
           );
 
-          // Delay redirect for better UX
-          setTimeout(() => {
-            router.push("/admin/verification-pending");
-          }, 1000);
+          // Redirect immediately to avoid race conditions
+          router.push("/admin/verification-pending");
           return;
         }
 
@@ -95,12 +100,15 @@ export default function AdminLogin() {
 
         // Generate a simple token (in a real app, you'd use JWT or similar)
         const token = btoa(`${result.admin._id}:${Date.now()}`);
+
+        // First update the auth store
         login(result.admin, token);
 
-        // Delay redirect for better UX
+        // Small delay to ensure the state is updated before navigation
         setTimeout(() => {
-          router.push("/admin/dashboard");
-        }, 1000);
+          console.log("Navigating to dashboard...");
+          window.location.href = "/admin/dashboard";
+        }, 500);
       }
     } catch (error: unknown) {
       const convexError = error as ConvexError;

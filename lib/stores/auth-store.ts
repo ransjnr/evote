@@ -29,9 +29,20 @@ const createBrowserStorage = () => {
       if (!isBrowser) return null;
       try {
         const str = localStorage.getItem(name);
-        return str ? JSON.parse(str) : null;
+        if (!str) return null;
+
+        // Check if the state looks valid before parsing
+        if (!str.includes("isAuthenticated") || !str.includes("admin")) {
+          console.warn("Auth storage appears to be invalid, resetting");
+          localStorage.removeItem(name);
+          return null;
+        }
+
+        return JSON.parse(str);
       } catch (error) {
         console.error("Error reading from localStorage", error);
+        // If there's an error, clear the corrupt data
+        localStorage.removeItem(name);
         return null;
       }
     },
@@ -39,6 +50,11 @@ const createBrowserStorage = () => {
       if (!isBrowser) return;
       try {
         localStorage.setItem(name, JSON.stringify(value));
+        // Double check to ensure data was written correctly
+        const check = localStorage.getItem(name);
+        if (!check) {
+          console.warn("Failed to verify localStorage write");
+        }
       } catch (error) {
         console.error("Error writing to localStorage", error);
       }

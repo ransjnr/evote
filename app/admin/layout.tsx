@@ -172,13 +172,26 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       "/admin/registration-success",
     ];
 
+    // Check if we're on a public route that doesn't require authentication
+    const isPublicRoute = publicRoutes.includes(pathname);
+
+    // Skip auth check if on public route
+    if (isPublicRoute) {
+      setIsLoading(false);
+      return;
+    }
+
+    // For protected routes, check authentication
     // Give browser time to rehydrate the Zustand store from localStorage
     const timer = setTimeout(() => {
-      if (!isAuthenticated && !publicRoutes.includes(pathname)) {
-        router.push("/admin/login");
+      if (!isAuthenticated) {
+        console.log("Not authenticated, redirecting to login");
+        router.replace("/admin/login");
+        return;
       }
+      
       setIsLoading(false);
-    }, 100);
+    }, 200); // Slightly longer timeout to ensure auth state is loaded
 
     return () => clearTimeout(timer);
   }, [isAuthenticated, pathname, router]);
@@ -247,8 +260,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   const handleLogout = () => {
+    // First clear the auth state
     logout();
-    router.push("/admin/login");
+    
+    // Clear any other related storage items
+    if (typeof window !== "undefined") {
+      // Clear any related localStorage items
+      localStorage.removeItem("pendingAdmin");
+      sessionStorage.removeItem("bypass_department_check");
+      
+      console.log("Logging out and redirecting to login page");
+      
+      // Use location.href for a full page refresh to ensure clean state
+      window.location.href = "/admin/login";
+    }
   };
 
   const getInitials = (name: string) => {
