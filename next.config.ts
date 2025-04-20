@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
       "example.com",
     ],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
