@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!data.status) {
+      console.error("Paystack initialization error:", data);
       return new NextResponse(
         JSON.stringify({ error: "Failed to initialize payment" }),
         { status: 400 }
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
       JSON.stringify({
         success: true,
         ussdPrompt: data.data.authorization_url,
+        reference: data.data.reference,
       }),
       { status: 200 }
     );

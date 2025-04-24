@@ -47,6 +47,7 @@ export async function POST(req: Request) {
               sessionId,
               eventId: event._id,
               votePrice: event.votePrice,
+              nomineeCode: nomineeCode,
             });
 
             response = `CON ${event.name}\nNominee: ${nominee.name}\nCode: ${nominee.code}\nCategory: ${category.name}\n1. Proceed\n0. Cancel`;
@@ -98,15 +99,31 @@ export async function POST(req: Request) {
           const paymentData = await paymentResponse.json();
 
           if (!paymentData.success) {
+            console.error("Payment initialization failed:", paymentData);
             response = "END Payment initialization failed. Please try again.";
             break;
           }
+
+          // Store the payment reference in the session
+          await convexClient.mutation(api.session.updateVoteSession, {
+            sessionId,
+            paymentReference: paymentData.reference,
+          });
 
           response = `CON Total cost is GHC ${total}\nPress 1 to confirm payment\n\nYou will receive a USSD prompt to complete your payment.`;
           break;
         }
         case 5:
           if (input[4] === "1") {
+            const session = await convexClient.query(api.session.getVoteSession, {
+              sessionId,
+            });
+
+            if (!session || !session.paymentReference) {
+              response = "END Payment session expired. Please start again.";
+              break;
+            }
+
             response = "END Please follow the USSD prompt to complete your payment. You will receive a confirmation message once the payment is successful.";
           } else {
             response = "END Payment not confirmed.";

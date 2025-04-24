@@ -82,8 +82,11 @@ export default defineSchema({
     sessionId: v.string(),
     eventId: v.id("events"),
     votePrice: v.number(),
-    timestamp: v.number(), // optional for expiration logic
-  }),
+    nomineeCode: v.optional(v.string()),
+    paymentReference: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
+    timestamp: v.optional(v.number()), // Keep for backward compatibility
+  }).index("by_session", ["sessionId"]),
 
   // Payments table
   payments: defineTable({
