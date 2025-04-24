@@ -77,6 +77,14 @@ export default defineSchema({
     .index("by_event", ["eventId"])
     .index("by_transaction", ["transactionId"]),
 
+  // Vote sessions table
+  voteSessions: defineTable({
+    sessionId: v.string(),
+    eventId: v.id("events"),
+    votePrice: v.number(),
+    timestamp: v.number(), // optional for expiration logic
+  }),
+
   // Payments table
   payments: defineTable({
     transactionId: v.string(),

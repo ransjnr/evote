@@ -1,7 +1,9 @@
-"use client";
 import { NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
-import { convexClient } from "@/lib/convexClient";
+import { ConvexHttpClient } from "convex/browser";
+
+// Initialize Convex client
+const convexClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   try {
@@ -24,15 +26,30 @@ export async function POST(req: Request) {
         case 2: {
           const nomineeCode = input[1];
           try {
-            const nominee = await queryGeneric(
+            const nominee = await convexClient.query(
               api.nominees.getNomineeByCode,
               {
                 code: nomineeCode,
-              },
-              convexClient
+              }
             );
+            const category = await convexClient.query(
+              api.categories.getCategory,
+              {
+                categoryId: nominee.categoryId,
+              }
+            );
+            const event = await convexClient.query(api.events.getEvent, {
+              eventId: category.eventId,
+            });
 
-            response = `CON Nominee: ${nominee.name}\nCode: ${nominee.code}\nPress 1 to proceed or 0 to cancel`;
+            // Store session data (sessionId is unique per request from telco)
+            await convexClient.mutation(api.session.storeVoteSession, {
+              sessionId,
+              eventId: event._id,
+              votePrice: event.votePrice,
+            });
+
+            response = `CON ${event.name}\nNominee: ${nominee.name}\nCode: ${nominee.code}\nCategory: ${category.name}\n1. Proceed\n0. Cancel`;
           } catch (err) {
             console.error("Nominee fetch error:", err);
             response = "END Nominee not found. Please try again.";
@@ -48,15 +65,30 @@ export async function POST(req: Request) {
           break;
         case 4: {
           const numVotes = parseInt(input[3]);
-          const costPerVote = 5;
-          const total = numVotes * costPerVote;
-          response = `CON Total cost is KES ${total}\nPress 1 to confirm payment`;
+          if (isNaN(numVotes) || numVotes <= 0) {
+            response = "END Invalid number of votes. Please try again.";
+            break;
+          }
+
+          const session = await convexClient.query(api.session.getVoteSession, {
+            sessionId,
+          });
+
+          if (!session) {
+            response = "END Voting session expired. Please start again.";
+            break;
+          }
+
+          const total = (numVotes * session.votePrice).toFixed(2);
+
+          response = `CON Total cost is GHC ${total}\nPress 1 to confirm payment`;
           break;
         }
         case 5:
           if (input[4] === "1") {
             response =
-              "END Thank you for voting! Your payment will be processed.";
+              "END Your request is being processed. Please wait to confirm payment.";
+            // Here you would typically call a payment API and handle the response.
           } else {
             response = "END Payment not confirmed.";
           }
@@ -89,8 +121,6 @@ export async function POST(req: Request) {
     );
   }
 }
-
-// // Reject all other methods
 // export async function GET() {
 //   return new NextResponse("Method not allowed", { status: 405 });
 // }
