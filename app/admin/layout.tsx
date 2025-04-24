@@ -189,7 +189,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         router.replace("/admin/login");
         return;
       }
-      
+
       setIsLoading(false);
     }, 200); // Slightly longer timeout to ensure auth state is loaded
 
@@ -262,15 +262,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const handleLogout = () => {
     // First clear the auth state
     logout();
-    
+
     // Clear any other related storage items
     if (typeof window !== "undefined") {
       // Clear any related localStorage items
       localStorage.removeItem("pendingAdmin");
       sessionStorage.removeItem("bypass_department_check");
-      
+
       console.log("Logging out and redirecting to login page");
-      
+
       // Use location.href for a full page refresh to ensure clean state
       window.location.href = "/admin/login";
     }
@@ -418,6 +418,23 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               >
                 <CreditCard className="mr-2 h-4 w-4" />
                 Payments
+              </Button>
+            </Link>
+            <Link href="/admin/ussdashboard">
+              <Button
+                variant={
+                  pathname.includes("/admin/ussdashboard")
+                    ? "secondary"
+                    : "ghost"
+                }
+                className={`w-full justify-start rounded-lg text-sm font-medium hover:bg-indigo-50 ${
+                  pathname.includes("/admin/ussdashboard")
+                    ? "bg-indigo-50 text-primary shadow-sm hover:bg-indigo-100"
+                    : "text-gray-700"
+                }`}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                USSD
               </Button>
             </Link>
           </div>
