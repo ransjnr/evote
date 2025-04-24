@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { Id } from "./_generated/dataModel";
 
 const convexClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   try {
-    const { sessionId, nomineeCode, voteCount, amount } = await req.json();
+    const { sessionId, nomineeCode, voteCount, amount, phoneNumber, provider } = await req.json();
 
-    if (!sessionId || !nomineeCode || !voteCount || !amount) {
+    if (!sessionId || !nomineeCode || !voteCount || !amount || !phoneNumber || !provider) {
       return new NextResponse(
         JSON.stringify({ error: "Missing required parameters" }),
         { status: 400 }
@@ -27,12 +27,23 @@ export async function POST(req: Request) {
         amount: Math.round(amount * 100), // Convert to pesewas
         email: "ussd@evote.com", // Use a default email for USSD transactions
         currency: "GHS",
+<<<<<<< HEAD
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/ussd`,
+=======
+        channels: ["mobile_money"],
+        mobile_money: {
+          phone: phoneNumber,
+          provider: provider // Use the selected provider
+        },
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd/callback`,
+>>>>>>> 0a51da4e93cd09ae6880b34dd2d44ea5de7d71e8
         metadata: {
           sessionId,
           nomineeCode,
           voteCount,
-          paymentType: "ussd",
+          paymentType: "mobile_money",
+          provider,
+          phoneNumber,
         },
       }),
     });
@@ -47,17 +58,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // Return the USSD payment prompt
+    // Return the payment reference
     return new NextResponse(
       JSON.stringify({
         success: true,
-        ussdPrompt: data.data.authorization_url,
         reference: data.data.reference,
       }),
       { status: 200 }
     );
   } catch (error) {
-    console.error("Paystack USSD Error:", error);
+    console.error("Paystack Mobile Money Error:", error);
     return new NextResponse(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500 }

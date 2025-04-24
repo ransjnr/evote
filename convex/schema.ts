@@ -84,6 +84,7 @@ export default defineSchema({
     votePrice: v.number(),
     nomineeCode: v.optional(v.string()),
     paymentReference: v.optional(v.string()),
+    voteCount: v.optional(v.number()),
     createdAt: v.optional(v.number()),
     timestamp: v.optional(v.number()), // Keep for backward compatibility
   }).index("by_session", ["sessionId"]),
