@@ -82,49 +82,7 @@ export async function POST(req: Request) {
 
           const total = (numVotes * session.votePrice).toFixed(2);
 
-          // Store vote count in session
-          await convexClient.mutation(api.session.updateVoteSession, {
-            sessionId,
-            voteCount: numVotes,
-          });
-
-          response = `CON Total cost is GHC ${total}
-
-Select your network:
-1. MTN
-2. Vodafone
-3. AirtelTigo`;
-          break;
-        }
-        case 5: {
-          const networkChoice = input[4];
-          let provider;
-
-          switch (networkChoice) {
-            case "1":
-              provider = "mtn";
-              break;
-            case "2":
-              provider = "vod";
-              break;
-            case "3":
-              provider = "tgo";
-              break;
-            default:
-              response = "END Invalid network selected. Please try again.";
-              return;
-          }
-
-          const session = await convexClient.query(api.session.getVoteSession, {
-            sessionId,
-          });
-
-          if (!session) {
-            response = "END Session expired. Please start again.";
-            break;
-          }
-
-          // Initialize Paystack payment
+          // Initialize Paystack mobile money payment
           const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd`, {
             method: "POST",
             headers: {
@@ -133,10 +91,9 @@ Select your network:
             body: JSON.stringify({
               sessionId,
               nomineeCode: session.nomineeCode,
-              voteCount: session.voteCount,
-              amount: session.votePrice * session.voteCount,
+              voteCount: numVotes,
+              amount: parseFloat(total),
               phoneNumber,
-              provider,
             }),
           });
 
@@ -148,15 +105,56 @@ Select your network:
             break;
           }
 
-          // Store payment reference
+          // Store the payment reference in the session
           await convexClient.mutation(api.session.updateVoteSession, {
             sessionId,
             paymentReference: paymentData.reference,
           });
 
-          response = "END Payment initiated. Please check your phone to approve the payment.";
+          // Handle different payment statuses
+          if (paymentData.status === "pay_offline") {
+            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm you understand`;
+          } else if (paymentData.status === "send_otp") {
+            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm you understand`;
+          } else if (paymentData.status === "success") {
+            response = "END Payment successful! Your votes have been recorded.";
+          } else {
+            response = "END Payment status unclear. Please try again.";
+          }
           break;
         }
+        case 5:
+          if (input[4] === "1") {
+            const session = await convexClient.query(api.session.getVoteSession, {
+              sessionId,
+            });
+
+            if (!session || !session.paymentReference) {
+              response = "END Payment session expired. Please start again.";
+              break;
+            }
+
+            // Verify the payment status
+            const verifyResponse = await fetch(
+              `https://api.paystack.co/transaction/verify/${session.paymentReference}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                },
+              }
+            );
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.data.status === "success") {
+              response = "END Payment successful! Your votes have been recorded.";
+            } else {
+              response = "END Payment is still pending. Please check your phone to complete the payment.";
+            }
+          } else {
+            response = "END Payment not confirmed.";
+          }
+          break;
         default:
           response = "END Invalid input.";
       }
