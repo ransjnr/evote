@@ -42,7 +42,7 @@ export async function POST(req: Request) {
               eventId: category.eventId,
             });
 
-            // Store session data (sessionId is unique per request from telco)
+            // Store session data
             await convexClient.mutation(api.session.storeVoteSession, {
               sessionId,
               eventId: event._id,
@@ -82,7 +82,49 @@ export async function POST(req: Request) {
 
           const total = (numVotes * session.votePrice).toFixed(2);
 
-          // Initialize Paystack USSD payment
+          // Store vote count in session
+          await convexClient.mutation(api.session.updateVoteSession, {
+            sessionId,
+            voteCount: numVotes,
+          });
+
+          response = `CON Total cost is GHC ${total}
+
+Select your network:
+1. MTN
+2. Vodafone
+3. AirtelTigo`;
+          break;
+        }
+        case 5: {
+          const networkChoice = input[4];
+          let provider;
+
+          switch (networkChoice) {
+            case "1":
+              provider = "mtn";
+              break;
+            case "2":
+              provider = "vod";
+              break;
+            case "3":
+              provider = "tgo";
+              break;
+            default:
+              response = "END Invalid network selected. Please try again.";
+              return;
+          }
+
+          const session = await convexClient.query(api.session.getVoteSession, {
+            sessionId,
+          });
+
+          if (!session) {
+            response = "END Session expired. Please start again.";
+            break;
+          }
+
+          // Initialize Paystack payment
           const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd`, {
             method: "POST",
             headers: {
@@ -91,8 +133,10 @@ export async function POST(req: Request) {
             body: JSON.stringify({
               sessionId,
               nomineeCode: session.nomineeCode,
-              voteCount: numVotes,
-              amount: parseFloat(total),
+              voteCount: session.voteCount,
+              amount: session.votePrice * session.voteCount,
+              phoneNumber,
+              provider,
             }),
           });
 
@@ -104,31 +148,15 @@ export async function POST(req: Request) {
             break;
           }
 
-          // Store the payment reference in the session
+          // Store payment reference
           await convexClient.mutation(api.session.updateVoteSession, {
             sessionId,
             paymentReference: paymentData.reference,
           });
 
-          response = `CON Total cost is GHC ${total}\nPress 1 to confirm payment\n\nYou will receive a USSD prompt to complete your payment.`;
+          response = "END Payment initiated. Please check your phone to approve the payment.";
           break;
         }
-        case 5:
-          if (input[4] === "1") {
-            const session = await convexClient.query(api.session.getVoteSession, {
-              sessionId,
-            });
-
-            if (!session || !session.paymentReference) {
-              response = "END Payment session expired. Please start again.";
-              break;
-            }
-
-            response = "END Please follow the USSD prompt to complete your payment. You will receive a confirmation message once the payment is successful.";
-          } else {
-            response = "END Payment not confirmed.";
-          }
-          break;
         default:
           response = "END Invalid input.";
       }
