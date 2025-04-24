@@ -20,6 +20,7 @@ import {
   LogOut,
   Trophy,
   HelpCircle,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TutorialMenu } from "@/components/ui/tutorial/tutorial-menu";

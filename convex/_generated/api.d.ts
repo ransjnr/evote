@@ -19,6 +19,7 @@ import type * as departments from "../departments.js";
 import type * as events from "../events.js";
 import type * as migrations from "../migrations.js";
 import type * as nominees from "../nominees.js";
+import type * as payments from "../payments.js";
 import type * as voting from "../voting.js";
 
 /**
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   events: typeof events;
   migrations: typeof migrations;
   nominees: typeof nominees;
+  payments: typeof payments;
   voting: typeof voting;
 }>;
 export declare const api: FilterApi<

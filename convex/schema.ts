@@ -90,8 +90,8 @@ export default defineSchema({
     eventId: v.id("events"),
     paymentReference: v.string(),
     // USSD-specific fields
-    phoneNumber: v.string(), // Voter's phone number
-    nomineeId: v.id("nominees"), // Reference to the nominee voted for
+    phoneNumber: v.optional(v.string()), // Voter's phone number
+    nomineeId: v.optional(v.id("nominees")), // Reference to the nominee voted for
     createdAt: v.number(),
   })
     .index("by_transaction", ["transactionId"])
