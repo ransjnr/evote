@@ -81,14 +81,33 @@ export async function POST(req: Request) {
 
           const total = (numVotes * session.votePrice).toFixed(2);
 
-          response = `CON Total cost is GHC ${total}\nPress 1 to confirm payment`;
+          // Initialize Paystack USSD payment
+          const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              sessionId,
+              nomineeCode: session.nomineeCode,
+              voteCount: numVotes,
+              amount: parseFloat(total),
+            }),
+          });
+
+          const paymentData = await paymentResponse.json();
+
+          if (!paymentData.success) {
+            response = "END Payment initialization failed. Please try again.";
+            break;
+          }
+
+          response = `CON Total cost is GHC ${total}\nPress 1 to confirm payment\n\nYou will receive a USSD prompt to complete your payment.`;
           break;
         }
         case 5:
           if (input[4] === "1") {
-            response =
-              "END Your request is being processed. Please wait to confirm payment.";
-            // Here you would typically call a payment API and handle the response.
+            response = "END Please follow the USSD prompt to complete your payment. You will receive a confirmation message once the payment is successful.";
           } else {
             response = "END Payment not confirmed.";
           }
