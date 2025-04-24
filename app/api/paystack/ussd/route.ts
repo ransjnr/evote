@@ -27,10 +27,12 @@ export async function POST(req: Request) {
         amount: Math.round(amount * 100), // Convert to pesewas
         email: "ussd@evote.com", // Use a default email for USSD transactions
         currency: "GHS",
+        channels: ["mobile_money"],
         mobile_money: {
           phone: phoneNumber,
           provider: "mtn" // Default to MTN as it's most common in Ghana
         },
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd/callback`,
         metadata: {
           sessionId,
           nomineeCode,
