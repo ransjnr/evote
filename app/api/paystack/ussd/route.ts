@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         amount: Math.round(amount * 100), // Convert to pesewas
         email: "ussd@evote.com", // Use a default email for USSD transactions
         currency: "GHS",
-        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd/callback`,
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/ussd`,
         metadata: {
           sessionId,
           nomineeCode,
