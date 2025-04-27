@@ -1,61 +1,26 @@
 import { NextResponse } from "next/server";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "@/convex/_generated/api";
+import type { NextRequest } from "next/server";
+import axios from "axios";
 
-const convexClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { email, phone, amount, provider } = body;
 
-export async function POST(req: Request) {
   try {
-    const data = await req.json();
-
-    // Verify the payment with Paystack
-    const response = await fetch(
-      `https://api.paystack.co/transaction/verify/${data.reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_SECRET_KEY}`,
-        },
-      }
-    );
-
-    const verificationData = await response.json();
-
-    if (!verificationData.status || verificationData.data.status !== "success") {
-      return new NextResponse(
-        JSON.stringify({ error: "Payment verification failed" }),
-        { status: 400 }
-      );
-    }
-
-    const { sessionId, nomineeCode, voteCount } = verificationData.data.metadata;
-
-    // Verify and record the payment
-    const result = await convexClient.mutation(api.voting.verifyPaymentByCode, {
-      transactionId: data.reference,
-      paymentReference: data.reference,
-      nomineeCode,
-      voteCount: parseInt(voteCount),
+    const response = await axios.post("https://api.paystack.co/charge", {
+      email,
+      amount: parseInt(amount) * 100,
+      currency: "GHS",
+      mobile_money: { phone, provider },
+    }, {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
     });
 
-    if (!result.success) {
-      return new NextResponse(
-        JSON.stringify({ error: "Failed to record payment" }),
-        { status: 400 }
-      );
-    }
-
-    return new NextResponse(
-      JSON.stringify({
-        success: true,
-        message: "Payment processed successfully",
-      }),
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Paystack USSD Callback Error:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500 }
-    );
+    return NextResponse.json(response.data.data);
+  } catch (error: any) {
+    return NextResponse.json({ error: "Charge failed", details: error.message }, { status: 500 });
   }
-} 
+}

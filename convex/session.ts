@@ -45,11 +45,14 @@ export const getVoteSession = query({
   },
 });
 
-// Update vote session with payment reference
 export const updateVoteSession = mutation({
   args: {
     sessionId: v.string(),
-    paymentReference: v.string(),
+    voteCount: v.optional(v.number()),       // make optional so you can update only what's needed
+    votePrice: v.optional(v.number()),
+    nomineeCode: v.optional(v.string()),
+    eventId: v.optional(v.id("events")),
+    paymentReference: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const session = await ctx.db
@@ -61,8 +64,33 @@ export const updateVoteSession = mutation({
       throw new Error("Session not found");
     }
 
+    const updatePayload: Record<string, any> = {};
+
+    if (args.voteCount !== undefined) updatePayload.voteCount = args.voteCount;
+    if (args.votePrice !== undefined) updatePayload.votePrice = args.votePrice;
+    if (args.nomineeCode !== undefined) updatePayload.nomineeCode = args.nomineeCode;
+    if (args.eventId !== undefined) updatePayload.eventId = args.eventId;
+    if (args.paymentReference !== undefined) updatePayload.paymentReference = args.paymentReference;
+
+    return await ctx.db.patch(session._id, updatePayload);
+  },
+});
+
+
+export const markPaymentAsComplete = mutation({
+  args: {
+    paymentReference: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("voteSessions")
+      .withIndex("by_reference", (q) => q.eq("paymentReference", args.paymentReference))
+      .first();
+
+    if (!session) throw new Error("Session not found for reference");
+
     return await ctx.db.patch(session._id, {
-      paymentReference: args.paymentReference,
+      paymentStatus: "paid", // Add this field to your schema
     });
   },
 });

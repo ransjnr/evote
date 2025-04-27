@@ -77,16 +77,18 @@ export default defineSchema({
     .index("by_event", ["eventId"])
     .index("by_transaction", ["transactionId"]),
 
-  // Vote sessions table
   voteSessions: defineTable({
     sessionId: v.string(),
     eventId: v.id("events"),
     votePrice: v.number(),
+    voteCount: v.optional(v.number()),
     nomineeCode: v.optional(v.string()),
     paymentReference: v.optional(v.string()),
+    paymentStatus: v.optional(v.union(v.literal("pending"), v.literal("paid"))),
     createdAt: v.optional(v.number()),
     timestamp: v.optional(v.number()), // Keep for backward compatibility
-  }).index("by_session", ["sessionId"]),
+  }).index("by_session", ["sessionId"])
+    .index("by_reference", ["paymentReference"]),
 
   // Payments table
   payments: defineTable({

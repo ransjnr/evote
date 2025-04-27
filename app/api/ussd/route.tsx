@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
+import axios from "axios";
 
-// Initialize Convex client
 const convexClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
@@ -12,6 +12,13 @@ export async function POST(req: Request) {
     const sessionId = params.get("sessionId") || "";
     const phoneNumber = params.get("phoneNumber") || "";
     const text = params.get("text") || "";
+
+    if (!sessionId || !phoneNumber) {
+      return new NextResponse("END Missing session or phone number.", {
+        status: 400,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
 
     let response = "";
     const input = text.split("*");
@@ -23,31 +30,31 @@ export async function POST(req: Request) {
         case 1:
           response = "CON Enter the unique code of your nominee:";
           break;
+
         case 2: {
           const nomineeCode = input[1];
           try {
             const nominee = await convexClient.query(
               api.nominees.getNomineeByCode,
-              {
-                code: nomineeCode,
-              }
+              { code: nomineeCode }
             );
+
             const category = await convexClient.query(
               api.categories.getCategory,
               {
                 categoryId: nominee.categoryId,
               }
             );
+
             const event = await convexClient.query(api.events.getEvent, {
               eventId: category.eventId,
             });
 
-            // Store session data
             await convexClient.mutation(api.session.storeVoteSession, {
               sessionId,
               eventId: event._id,
+              nomineeCode: nominee.code,
               votePrice: event.votePrice,
-              nomineeCode: nomineeCode,
             });
 
             response = `CON ${event.name}\nNominee: ${nominee.name}\nCode: ${nominee.code}\nCategory: ${category.name}\n1. Proceed\n0. Cancel`;
@@ -57,6 +64,7 @@ export async function POST(req: Request) {
           }
           break;
         }
+
         case 3:
           if (input[2] === "1") {
             response = "CON Enter number of votes:";
@@ -64,6 +72,7 @@ export async function POST(req: Request) {
             response = "END Voting cancelled.";
           }
           break;
+
         case 4: {
           const numVotes = parseInt(input[3]);
           if (isNaN(numVotes) || numVotes <= 0) {
@@ -80,81 +89,80 @@ export async function POST(req: Request) {
             break;
           }
 
-          const total = (numVotes * session.votePrice).toFixed(2);
-
-          // Initialize Paystack mobile money payment
-          const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              sessionId,
-              nomineeCode: session.nomineeCode,
-              voteCount: numVotes,
-              amount: parseFloat(total),
-              phoneNumber,
-            }),
-          });
-
-          const paymentData = await paymentResponse.json();
-
-          if (!paymentData.success) {
-            console.error("Payment initialization failed:", paymentData);
-            response = "END Payment initialization failed. Please try again.";
-            break;
-          }
-
-          // Store the payment reference in the session
           await convexClient.mutation(api.session.updateVoteSession, {
             sessionId,
-            paymentReference: paymentData.reference,
+            voteCount: numVotes,
           });
 
-          // Handle different payment statuses
-          if (paymentData.status === "pay_offline") {
-            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm you understand`;
-          } else if (paymentData.status === "send_otp") {
-            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm you understand`;
-          } else if (paymentData.status === "success") {
-            response = "END Payment successful! Your votes have been recorded.";
-          } else {
-            response = "END Payment status unclear. Please try again.";
-          }
+          const total = (numVotes * session.votePrice).toFixed(2);
+          response = `CON Total cost is GHC ${total}\n1. Continue to payment\n0. Cancel`;
           break;
         }
+
         case 5:
           if (input[4] === "1") {
-            const session = await convexClient.query(api.session.getVoteSession, {
-              sessionId,
-            });
-
-            if (!session || !session.paymentReference) {
-              response = "END Payment session expired. Please start again.";
-              break;
-            }
-
-            // Verify the payment status
-            const verifyResponse = await fetch(
-              `https://api.paystack.co/transaction/verify/${session.paymentReference}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-                },
-              }
-            );
-
-            const verifyData = await verifyResponse.json();
-
-            if (verifyData.data.status === "success") {
-              response = "END Payment successful! Your votes have been recorded.";
-            } else {
-              response = "END Payment is still pending. Please check your phone to complete the payment.";
-            }
+            response =
+              "CON Select Network:\n1. MTN\n2. Airtel/Tigo\n3. Vodafone";
           } else {
             response = "END Payment not confirmed.";
           }
           break;
+
+        case 6: {
+          const providerMap: Record<string, string> = {
+            "1": "mtn",
+            "2": "atl",
+            "3": "vod",
+          };
+          const provider = providerMap[input[5]];
+
+          if (!provider) {
+            response = "END Invalid network provider. Please try again.";
+            break;
+          }
+
+          const session = await convexClient.query(api.session.getVoteSession, {
+            sessionId,
+          });
+
+          if (!session) {
+            response = "END Session expired. Please try again.";
+            break;
+          }
+
+          const totalCost = (session.voteCount * session.votePrice).toFixed(2);
+
+          try {
+            const payRes = await axios.post(
+              `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/callback`,
+              {
+                email: "elikwaku37@gmail.com",
+                // email: `${phoneNumber}@paynow.com`,
+                phone: phoneNumber,
+                amount: totalCost,
+                provider,
+                metadata: { sessionId },
+              }
+            );
+
+            await convexClient.mutation(api.session.updateVoteSession, {
+              sessionId,
+              paymentStatus: "pending",
+            });
+
+            if (payRes.data.display_text) {
+              response = `END ${payRes.data.display_text}`;
+            } else {
+              response = `END Payment initiated`;
+            }
+          } catch (e) {
+            console.error("Payment initiation error:", e);
+            response = `END Failed to initiate payment`;
+          }
+
+          break;
+        }
+
         default:
           response = "END Invalid input.";
       }
@@ -168,9 +176,7 @@ export async function POST(req: Request) {
 
     return new NextResponse(response, {
       status: 200,
-      headers: {
-        "Content-Type": "text/plain",
-      },
+      headers: { "Content-Type": "text/plain" },
     });
   } catch (error) {
     console.error("USSD Error:", error);
@@ -183,6 +189,3 @@ export async function POST(req: Request) {
     );
   }
 }
-// export async function GET() {
-//   return new NextResponse("Method not allowed", { status: 405 });
-// }
