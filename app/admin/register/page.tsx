@@ -38,6 +38,7 @@ import {
   Star,
   LogIn,
 } from "lucide-react";
+import { Id } from "@/convex/_generated/dataModel";
 
 // Define error type
 interface ConvexError {
@@ -63,9 +64,7 @@ export default function AdminRegister() {
 
   // State for the verification waiting modal
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [registeredAdminId, setRegisteredAdminId] = useState<string | null>(
-    null
-  );
+  const [registeredAdminId, setRegisteredAdminId] = useState<Id<"admins"> | null>(null);
   const [dots, setDots] = useState("");
   const [statusMessage, setStatusMessage] = useState(
     "Processing registration..."
@@ -93,7 +92,7 @@ export default function AdminRegister() {
   const [adminVerified, setAdminVerified] = useState(false);
 
   // Create a separate component to handle admin verification checking
-  const CheckAdminVerification = ({ adminId }: { adminId: string }) => {
+  const CheckAdminVerification = ({ adminId }: { adminId: Id<"admins"> }) => {
     // This query will only run in this component when adminId is available
     const adminData = useQuery(api.auth.getAdmin, { adminId });
 
@@ -252,44 +251,44 @@ export default function AdminRegister() {
     setIsLoading(true);
 
     try {
-      // Prepare admin data
+      // Register admin with department details
       const adminData = {
         email,
         password,
         name,
         departmentId: departmentSlug,
-        role: "department_admin",
+        role: "department_admin" as const,
+        departmentName,
+        departmentDescription: departmentDesc,
       };
 
-      // Register admin
       const result = await registerAdmin(adminData);
 
-      if (result.success) {
-        setRegisteredAdminId(result.adminId);
-
-        // Store admin info in localStorage for verification page
-        localStorage.setItem(
-          "pendingAdmin",
-          JSON.stringify({
-            _id: result.adminId,
-            email: email,
-            name: name,
-          })
-        );
-
-        // Show success toast
-        toast.success(
-          "Registration successful! Redirecting to verification page..."
-        );
-
-        // Delay redirect for better UX and to ensure localStorage is set
-          setTimeout(() => {
-          router.push("/admin/verification-pending");
-          }, 1500);
-      } else {
-        setIsLoading(false);
-        toast.error(result.message || "Registration failed!");
+      if (!result.success) {
+        throw new Error("Failed to register admin");
       }
+
+      setRegisteredAdminId(result.adminId as Id<"admins">);
+
+      // Store admin info in localStorage for verification page
+      localStorage.setItem(
+        "pendingAdmin",
+        JSON.stringify({
+          _id: result.adminId,
+          email: email,
+          name: name,
+        })
+      );
+
+      // Show success toast
+      toast.success(
+        "Registration successful! Redirecting to verification page..."
+      );
+
+      // Delay redirect for better UX and to ensure localStorage is set
+      setTimeout(() => {
+        router.push("/admin/verification-pending");
+      }, 1500);
     } catch (error: any) {
       setIsLoading(false);
       toast.error(error.message || "Registration failed!");
@@ -684,8 +683,8 @@ export default function AdminRegister() {
                     formComplete
                       ? "bg-primary hover:bg-primary/90"
                       : "bg-gray-300"
-                  }`}
-                  disabled={!formComplete}
+                  } ${isLoading ? "cursor-not-allowed opacity-80" : ""}`}
+                  disabled={!formComplete || isLoading}
                 >
                   <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-400 to-primary-dark opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
 
@@ -849,14 +848,6 @@ export default function AdminRegister() {
               </CardContent>
 
               <CardFooter className="flex flex-col space-y-4 pt-4">
-                <div className="bg-blue-50 px-4 py-3 rounded-lg border border-blue-100 text-sm text-blue-800 mb-2">
-                  <p className="flex items-center">
-                    <AlertTriangle className="h-4 w-4 mr-2 text-blue-600" />
-                    Your account will require verification by a super admin
-                    before you can log in.
-                  </p>
-                </div>
-
                 <Button
                   type="submit"
                   className={`w-full rounded-lg relative overflow-hidden group transition-all duration-300 ease-out transform hover:-translate-y-[2px] ${
@@ -867,51 +858,11 @@ export default function AdminRegister() {
                   disabled={!formComplete || isLoading}
                 >
                   <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-400 to-primary-dark opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
-
-                  {isLoading ? (
-                    <div className="flex items-center justify-center relative z-10">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Registering...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center relative z-10">
-                      <span>Complete Registration</span>
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
-                    </div>
-                  )}
+                  <div className="flex items-center justify-center relative z-10">
+                    <span>Complete Registration</span>
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
+                  </div>
                 </Button>
-
-                <div className="flex items-center justify-center mt-4">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="text-gray-500 hover:text-gray-700"
-                    onClick={() => setStep(1)}
-                    disabled={isLoading}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Account Details
-                  </Button>
-                </div>
               </CardFooter>
             </form>
           )}

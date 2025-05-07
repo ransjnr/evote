@@ -48,6 +48,8 @@ export const registerAdmin = mutation({
     name: v.string(),
     departmentId: v.string(),
     role: v.union(v.literal("super_admin"), v.literal("department_admin")),
+    departmentName: v.optional(v.string()),
+    departmentDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Check if email already exists
@@ -58,6 +60,16 @@ export const registerAdmin = mutation({
 
     if (existingUser) {
       throw new ConvexError("Email already exists");
+    }
+
+    // Check if department slug already exists
+    const existingDepartment = await ctx.db
+      .query("departments")
+      .withIndex("by_slug", (q) => q.eq("slug", args.departmentId))
+      .first();
+
+    if (existingDepartment) {
+      throw new ConvexError("Department with this slug already exists");
     }
 
     // Hash password using our simple hash function
@@ -73,6 +85,17 @@ export const registerAdmin = mutation({
       isVerified: args.role === "super_admin" ? true : false, // Super admins are auto-verified
       createdAt: Date.now(),
     });
+
+    // Create the department if department details are provided
+    if (args.departmentName) {
+      await ctx.db.insert("departments", {
+        name: args.departmentName,
+        description: args.departmentDescription,
+        slug: args.departmentId,
+        createdBy: adminId,
+        createdAt: Date.now(),
+      });
+    }
 
     return { success: true, adminId };
   },

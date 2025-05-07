@@ -77,6 +77,19 @@ export default defineSchema({
     .index("by_event", ["eventId"])
     .index("by_transaction", ["transactionId"]),
 
+  voteSessions: defineTable({
+    sessionId: v.string(),
+    eventId: v.id("events"),
+    votePrice: v.number(),
+    voteCount: v.optional(v.number()),
+    nomineeCode: v.optional(v.string()),
+    paymentReference: v.optional(v.string()),
+    paymentStatus: v.optional(v.union(v.literal("pending"), v.literal("paid"))),
+    createdAt: v.optional(v.number()),
+    timestamp: v.optional(v.number()), // Keep for backward compatibility
+  }).index("by_session", ["sessionId"])
+    .index("by_reference", ["paymentReference"]),
+
   // Payments table
   payments: defineTable({
     transactionId: v.string(),
@@ -89,8 +102,13 @@ export default defineSchema({
     ),
     eventId: v.id("events"),
     paymentReference: v.string(),
+    // USSD-specific fields
+    phoneNumber: v.optional(v.string()), // Voter's phone number
+    nomineeId: v.optional(v.id("nominees")), // Reference to the nominee voted for
+    source: v.optional(v.union(v.literal("ussd"), v.literal("app"))), // Payment source
     createdAt: v.number(),
   })
     .index("by_transaction", ["transactionId"])
-    .index("by_event", ["eventId"]),
+    .index("by_event", ["eventId"])
+    .index("by_source", ["source"]),
 });

@@ -11,6 +11,7 @@ export const createDepartment = mutation({
     adminId: v.id("admins"),
   },
   handler: async (ctx, args) => {
+    console.log("Looking for department with slug:", args.slug);
     // Check if slug already exists
     const existingDepartment = await ctx.db
       .query("departments")

@@ -109,6 +109,7 @@ export const getNominee = query({
   },
 });
 
+
 // List nominees by category
 export const listNomineesByCategory = query({
   args: {
