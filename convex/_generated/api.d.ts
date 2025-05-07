@@ -17,6 +17,7 @@ import type * as auth from "../auth.js";
 import type * as categories from "../categories.js";
 import type * as departments from "../departments.js";
 import type * as events from "../events.js";
+import type * as migrations_update_payment_sources from "../migrations/update_payment_sources.js";
 import type * as migrations from "../migrations.js";
 import type * as nominees from "../nominees.js";
 import type * as payments from "../payments.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   departments: typeof departments;
   events: typeof events;
+  "migrations/update_payment_sources": typeof migrations_update_payment_sources;
   migrations: typeof migrations;
   nominees: typeof nominees;
   payments: typeof payments;

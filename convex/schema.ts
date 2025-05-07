@@ -105,8 +105,10 @@ export default defineSchema({
     // USSD-specific fields
     phoneNumber: v.optional(v.string()), // Voter's phone number
     nomineeId: v.optional(v.id("nominees")), // Reference to the nominee voted for
+    source: v.optional(v.union(v.literal("ussd"), v.literal("app"))), // Payment source
     createdAt: v.number(),
   })
     .index("by_transaction", ["transactionId"])
-    .index("by_event", ["eventId"]),
+    .index("by_event", ["eventId"])
+    .index("by_source", ["source"]),
 });

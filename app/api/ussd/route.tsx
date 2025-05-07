@@ -126,40 +126,119 @@ export async function POST(req: Request) {
           });
 
           if (!session) {
-            response = "END Session expired. Please try again.";
+            response = "END Session expired. Please start again.";
             break;
           }
 
-          const totalCost = (session.voteCount * session.votePrice).toFixed(2);
+          const voteCount = session.voteCount!;
+          const totalCost = (voteCount * session.votePrice).toFixed(2);
 
           try {
-            const payRes = await axios.post(
-              `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/callback`,
-              {
-                email: "elikwaku37@gmail.com",
-                // email: `${phoneNumber}@paynow.com`,
-                phone: phoneNumber,
-                amount: totalCost,
-                provider,
-                metadata: { sessionId },
-              }
-            );
-
-            await convexClient.mutation(api.session.updateVoteSession, {
-              sessionId,
-              paymentStatus: "pending",
-            });
-
-            if (payRes.data.display_text) {
-              response = `END ${payRes.data.display_text}`;
-            } else {
-              response = `END Payment initiated`;
+            // Prepare internal Paystack USSD API URL
+            let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+            if (!baseUrl) {
+              const host = req.headers.get("host") || "";
+              const proto =
+                req.headers.get("x-forwarded-proto") ||
+                (process.env.NODE_ENV === "development" ? "http" : "https");
+              baseUrl = `${proto}://${host}`;
+              console.warn(
+                "NEXT_PUBLIC_APP_URL not set; falling back to",
+                baseUrl
+              );
             }
-          } catch (e) {
-            console.error("Payment initiation error:", e);
-            response = `END Failed to initiate payment`;
+            const ussdUrl = `${baseUrl}/api/paystack/ussd`;
+            // Call our internal USSD payment init endpoint
+            const payRes = await axios.post(
+              ussdUrl,
+              {
+                sessionId,
+                nomineeCode: session.nomineeCode!,
+                voteCount,
+                amount: parseFloat(totalCost),
+                phoneNumber,
+                provider,
+              },
+              { timeout: 10000 }
+            );
+            const { data } = payRes;
+            // Handle internal API errors
+            if (data.error) {
+              console.error(
+                "USSD payment initialization error:",
+                data.error,
+                data.details
+              );
+              // Include details in response for debugging
+              response = `END Failed to initiate payment: ${data.error}${data.details ? " – " + JSON.stringify(data.details) : ""}`;
+            } else if (data.success) {
+              // Store the payment reference in the session
+              await convexClient.mutation(api.session.updateVoteSession, {
+                sessionId,
+                paymentReference: data.reference,
+              });
+
+              // Show OTP prompt
+              response = `CON ${data.displayText || "Please enter the OTP sent to your phone:"}`;
+            } else {
+              console.error("Unexpected USSD Paystack response:", data);
+              response =
+                "END Payment initiation encountered an unexpected response.";
+            }
+          } catch (e: any) {
+            console.error(
+              "USSD payment initiation exception:",
+              e.response?.data || e.message
+            );
+            const errDetail = e.response?.data?.error || e.message;
+            response = `END Failed to initiate payment: ${errDetail}`;
+          }
+          break;
+        }
+
+        case 7: {
+          const otp = input[6];
+          if (!otp || otp.length < 4) {
+            response = "END Invalid OTP. Please try again.";
+            break;
           }
 
+          const session = await convexClient.query(api.session.getVoteSession, {
+            sessionId,
+          });
+
+          if (!session || !session.paymentReference) {
+            response = "END Session expired. Please start again.";
+            break;
+          }
+
+          try {
+            // Submit OTP to Paystack
+            const payRes = await axios.post(
+              `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd/otp`,
+              {
+                reference: session.paymentReference,
+                otp,
+              },
+              { timeout: 10000 }
+            );
+
+            const { data } = payRes;
+            if (data.error) {
+              response = `END ${data.error}`;
+            } else if (data.status === "success") {
+              response =
+                "END Payment successful! Your votes have been recorded.";
+            } else {
+              response = `END ${data.displayText || "Payment processing. Please check your phone to complete the transaction."}`;
+            }
+          } catch (e: any) {
+            console.error(
+              "OTP submission error:",
+              e.response?.data || e.message
+            );
+            response = "END Failed to process OTP. Please try again.";
+          }
           break;
         }
 

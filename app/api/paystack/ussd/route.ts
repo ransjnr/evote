@@ -1,18 +1,28 @@
 import { NextResponse } from "next/server";
-import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { ConvexHttpClient } from "convex/browser";
 
-const convexClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   try {
-    const { sessionId, nomineeCode, voteCount, amount, phoneNumber } = await req.json();
+    const payload = await req.json();
+    console.log('USSD init payload:', payload);
+    const { sessionId, nomineeCode, voteCount, amount, phoneNumber, provider } = payload;
 
-    if (!sessionId || !nomineeCode || !voteCount || !amount || !phoneNumber) {
+    if (!sessionId || !nomineeCode || !voteCount || !amount || !phoneNumber || !provider) {
       return new NextResponse(
         JSON.stringify({ error: "Missing required parameters" }),
         { status: 400 }
+      );
+    }
+
+    // Get the session to get the event ID
+    const session = await convex.query(api.session.getVoteSession, { sessionId });
+    if (!session) {
+      return new NextResponse(
+        JSON.stringify({ error: "Session not found" }),
+        { status: 404 }
       );
     }
 
@@ -27,12 +37,12 @@ export async function POST(req: Request) {
         amount: Math.round(amount * 100), // Convert to pesewas
         email: "ussd@evote.com", // Use a default email for USSD transactions
         currency: "GHS",
-        channels: ["mobile_money"],
+        channels: ["ussd"],
         mobile_money: {
           phone: phoneNumber,
-          provider: "mtn" // Default to MTN as it's most common in Ghana
+          provider: provider // Use selected network provider
         },
-        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd/callback`,
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd/webhook`,
         metadata: {
           sessionId,
           nomineeCode,
@@ -43,12 +53,55 @@ export async function POST(req: Request) {
     });
 
     const data = await response.json();
+    console.log('Paystack response:', data);
+    console.log('Paystack response status:', data.status);
+    console.log('Paystack data status:', data.data?.status);
+    console.log('Paystack display text:', data.data?.display_text);
 
+    // Check for HTTP-level errors
+    if (!response.ok) {
+      console.error("Paystack USSD init HTTP error:", response.status, data);
+      console.error("Error details:", data.message, data.errors);
+      return new NextResponse(
+        JSON.stringify({ error: data.message || "Initialization failed", details: data }),
+        { status: response.status }
+      );
+    }
+
+    // Check Paystack API status
     if (!data.status) {
       console.error("Paystack initialization error:", data);
+      console.error("Error details:", data.message, data.errors);
       return new NextResponse(
-        JSON.stringify({ error: "Failed to initialize payment" }),
+        JSON.stringify({ error: data.message || "Failed to initialize payment", details: data }),
         { status: 400 }
+      );
+    }
+
+    // Create initial payment record
+    try {
+      await convex.mutation(api.payments.createPayment, {
+        transactionId: data.data.reference,
+        amount: amount,
+        voteCount: voteCount,
+        status: "pending",
+        eventId: session.eventId,
+        paymentReference: data.data.reference,
+        phoneNumber: phoneNumber,
+        source: "ussd",
+      });
+
+      // Update session with payment reference and status
+      await convex.mutation(api.session.updateVoteSession, {
+        sessionId,
+        paymentReference: data.data.reference,
+        paymentStatus: "pending",
+      });
+    } catch (error) {
+      console.error("Failed to create payment record:", error);
+      return new NextResponse(
+        JSON.stringify({ error: "Failed to create payment record" }),
+        { status: 500 }
       );
     }
 

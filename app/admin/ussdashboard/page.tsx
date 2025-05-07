@@ -46,12 +46,32 @@ import {
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+// Define the type for our transaction data
+type Transaction = {
+  _id: string;
+  transactionId: string;
+  amount: number;
+  voteCount?: number;
+  status: "pending" | "succeeded" | "failed";
+  phoneNumber?: string;
+  nomineeId?: string;
+  source?: "ussd" | "app";
+  createdAt: number;
+  paymentReference: string;
+  nominee?: {
+    name: string;
+    code: string;
+  } | null;
+};
+
 export default function USSDDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const ussdTransactions = useQuery(api.payments.getUSSDTransactions);
+  const ussdTransactions = useQuery(api.payments.getUSSDTransactions) as
+    | Transaction[]
+    | undefined;
 
   // Calculate date range for filtering
   const getDateRangeTimestamp = () => {
@@ -80,14 +100,15 @@ export default function USSDDashboard() {
   // Apply filters
   const filteredTransactions = useMemo(() => {
     if (!ussdTransactions) return [];
-    
+
     return ussdTransactions.filter((transaction) => {
       // Apply search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
         transaction.transactionId.toLowerCase().includes(searchLower) ||
         transaction.phoneNumber?.toLowerCase().includes(searchLower) ||
-        transaction.paymentReference.toLowerCase().includes(searchLower);
+        transaction.paymentReference.toLowerCase().includes(searchLower) ||
+        transaction.nominee?.code.toLowerCase().includes(searchLower);
 
       // Apply status filter
       const matchesStatus =
@@ -96,7 +117,8 @@ export default function USSDDashboard() {
       // Apply date range filter
       const dateRangeTimestamp = getDateRangeTimestamp();
       const matchesDateRange =
-        dateRangeFilter === "all" || transaction.createdAt >= dateRangeTimestamp;
+        dateRangeFilter === "all" ||
+        transaction.createdAt >= dateRangeTimestamp;
 
       return matchesSearch && matchesStatus && matchesDateRange;
     });
@@ -155,7 +177,9 @@ export default function USSDDashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">USSD Transactions</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            USSD Transactions
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             View and manage all USSD transactions
           </p>
@@ -170,36 +194,49 @@ export default function USSDDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card className="bg-white border border-gray-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Total Amount</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">
+              Total Amount
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{formatCurrency(totalAmount)}</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {formatCurrency(totalAmount)}
+            </div>
             <p className="text-xs text-gray-500">Total revenue</p>
           </CardContent>
         </Card>
 
         <Card className="bg-white border border-gray-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Total Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">
+              Total Transactions
+            </CardTitle>
             <BarChart3 className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{totalTransactions}</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {totalTransactions}
+            </div>
             <p className="text-xs text-gray-500">USSD transactions</p>
           </CardContent>
         </Card>
 
         <Card className="bg-white border border-gray-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Success Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">
+              Success Rate
+            </CardTitle>
             <Phone className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
               {totalTransactions > 0
-                ? ((successfulTransactions / totalTransactions) * 100).toFixed(1)
-                : 0}%
+                ? ((successfulTransactions / totalTransactions) * 100).toFixed(
+                    1
+                  )
+                : 0}
+              %
             </div>
             <p className="text-xs text-gray-500">Successful transactions</p>
           </CardContent>
@@ -207,7 +244,9 @@ export default function USSDDashboard() {
 
         <Card className="bg-white border border-gray-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Status Breakdown</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">
+              Status Breakdown
+            </CardTitle>
             <BarChart3 className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
@@ -230,9 +269,11 @@ export default function USSDDashboard() {
       </div>
 
       {/* Transactions Table */}
-      <Card className="bg-white border border-gray-100 shadow-sm">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Transaction History</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            Transaction History
+          </CardTitle>
           <CardDescription className="text-gray-500">
             View all transactions made through the USSD application
           </CardDescription>
@@ -278,7 +319,9 @@ export default function USSDDashboard() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="text-gray-600">Transaction ID</TableHead>
+                  <TableHead className="text-gray-600">
+                    Transaction ID
+                  </TableHead>
                   <TableHead className="text-gray-600">Phone Number</TableHead>
                   <TableHead className="text-gray-600">Nominee Code</TableHead>
                   <TableHead className="text-gray-600">Amount</TableHead>
@@ -309,7 +352,9 @@ export default function USSDDashboard() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-700">{transaction.phoneNumber}</span>
+                        <span className="text-gray-700">
+                          {transaction.phoneNumber}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-700">
@@ -318,10 +363,14 @@ export default function USSDDashboard() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-700">{formatCurrency(transaction.amount)}</span>
+                        <span className="text-gray-700">
+                          {formatCurrency(transaction.amount)}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-700">{transaction.voteCount}</TableCell>
+                    <TableCell className="text-gray-700">
+                      {transaction.voteCount}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
@@ -329,8 +378,8 @@ export default function USSDDashboard() {
                           transaction.status === "succeeded"
                             ? "bg-green-100 text-green-800"
                             : transaction.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
                         }`}
                       >
                         {getStatusIcon(transaction.status)}
@@ -343,7 +392,9 @@ export default function USSDDashboard() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-700">{formatDate(transaction.createdAt)}</span>
+                        <span className="text-gray-700">
+                          {formatDate(transaction.createdAt)}
+                        </span>
                       </div>
                     </TableCell>
                   </TableRow>

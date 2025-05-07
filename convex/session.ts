@@ -53,6 +53,7 @@ export const updateVoteSession = mutation({
     nomineeCode: v.optional(v.string()),
     eventId: v.optional(v.id("events")),
     paymentReference: v.optional(v.string()),
+    paymentStatus: v.optional(v.union(v.literal("pending"), v.literal("paid"))),
   },
   handler: async (ctx, args) => {
     const session = await ctx.db
@@ -71,6 +72,7 @@ export const updateVoteSession = mutation({
     if (args.nomineeCode !== undefined) updatePayload.nomineeCode = args.nomineeCode;
     if (args.eventId !== undefined) updatePayload.eventId = args.eventId;
     if (args.paymentReference !== undefined) updatePayload.paymentReference = args.paymentReference;
+    if (args.paymentStatus !== undefined) updatePayload.paymentStatus = args.paymentStatus;
 
     return await ctx.db.patch(session._id, updatePayload);
   },
