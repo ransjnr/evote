@@ -56,6 +56,12 @@ export default function Home() {
             >
               Blog
             </Link>
+            <Link
+              href="/eticket"
+              className="text-gray-600 hover:text-primary transition-colors font-medium"
+            >
+              eTicket
+            </Link>
           </nav>
           <div className="flex items-center space-x-4">
             <Link
@@ -112,6 +118,15 @@ export default function Home() {
                   className="w-full sm:w-auto bg-white text-gray-800 border-none"
                 >
                   Explore Events
+                </Button>
+              </Link>
+              <Link href="/eticket">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto bg-green-400 text-white border-none"
+                >
+                  eTicketing
                 </Button>
               </Link>
               {/* <Link href="/admin/login">
