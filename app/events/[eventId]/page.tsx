@@ -471,9 +471,7 @@ export default function EventPage() {
               Explore Events
             </Link>
             <Link href="/admin/login">
-              <Button>
-                Get Started
-              </Button>
+              <Button>Get Started</Button>
             </Link>
           </div>
         </div>
