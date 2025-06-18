@@ -49,6 +49,7 @@ export default function AdminPayments() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [eventFilter, setEventFilter] = useState("all");
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState("all");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   // Get department info
@@ -70,7 +71,7 @@ export default function AdminPayments() {
   // Get all payments for the department directly
   const departmentPayments =
     useQuery(
-      api.voting.getPaymentsByDepartment,
+      api.payments.getPaymentsByDepartment,
       department ? { departmentId: department._id } : "skip"
     ) || [];
 
@@ -80,7 +81,7 @@ export default function AdminPayments() {
       const event = events.find((e) => e._id === payment.eventId);
       return {
         ...payment,
-        eventName: event?.name || "Unknown Event",
+        eventName: event?.name || payment.eventName || "Unknown Event",
         eventId: payment.eventId,
       };
     });
@@ -120,7 +121,15 @@ export default function AdminPayments() {
           .includes(searchQuery.toLowerCase()) ||
         payment.paymentReference
           .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .includes(searchQuery.toLowerCase()) ||
+        (payment.ticketTypeName &&
+          payment.ticketTypeName
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (payment.nomineeName &&
+          payment.nomineeName
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()));
 
       // Apply status filter
       const matchesStatus =
@@ -130,14 +139,32 @@ export default function AdminPayments() {
       const matchesEvent =
         eventFilter === "all" || payment.eventId === eventFilter;
 
+      // Apply payment type filter
+      const matchesPaymentType =
+        paymentTypeFilter === "all" ||
+        payment.paymentType === paymentTypeFilter;
+
       // Apply date range filter
       const dateRangeTimestamp = getDateRangeTimestamp();
       const matchesDateRange =
         dateRangeFilter === "all" || payment.createdAt >= dateRangeTimestamp;
 
-      return matchesSearch && matchesStatus && matchesEvent && matchesDateRange;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesEvent &&
+        matchesPaymentType &&
+        matchesDateRange
+      );
     });
-  }, [allPayments, searchQuery, statusFilter, eventFilter, dateRangeFilter]);
+  }, [
+    allPayments,
+    searchQuery,
+    statusFilter,
+    eventFilter,
+    paymentTypeFilter,
+    dateRangeFilter,
+  ]);
 
   // Sort payments
   const sortedPayments = useMemo(() => {
@@ -181,6 +208,32 @@ export default function AdminPayments() {
         .filter((p) => p.status === "succeeded")
         .reduce((sum, payment) => sum + payment.amount, 0),
     [sortedPayments]
+  );
+
+  const votePayments = useMemo(
+    () => sortedPayments.filter((p) => p.paymentType === "vote"),
+    [sortedPayments]
+  );
+
+  const ticketPayments = useMemo(
+    () => sortedPayments.filter((p) => p.paymentType === "ticket"),
+    [sortedPayments]
+  );
+
+  const voteRevenue = useMemo(
+    () =>
+      votePayments
+        .filter((p) => p.status === "succeeded")
+        .reduce((sum, payment) => sum + payment.amount, 0),
+    [votePayments]
+  );
+
+  const ticketRevenue = useMemo(
+    () =>
+      ticketPayments
+        .filter((p) => p.status === "succeeded")
+        .reduce((sum, payment) => sum + payment.amount, 0),
+    [ticketPayments]
   );
 
   const totalTransactions = sortedPayments.length;
@@ -254,7 +307,7 @@ export default function AdminPayments() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
         <Card className="bg-gradient-to-br from-green-50 to-green-100">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-600 flex items-center">
@@ -276,14 +329,50 @@ export default function AdminPayments() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-blue-600 flex items-center">
               <ArrowUpDown className="mr-2 h-4 w-4" />
-              Total Transactions
+              Vote Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-700">
+              {formatCurrency(voteRevenue)}
+            </div>
+            <p className="text-sm text-blue-600 mt-1">
+              {votePayments.filter((p) => p.status === "succeeded").length} vote
+              payments
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-purple-600 flex items-center">
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Ticket Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-purple-700">
+              {formatCurrency(ticketRevenue)}
+            </div>
+            <p className="text-sm text-purple-600 mt-1">
+              {ticketPayments.filter((p) => p.status === "succeeded").length}{" "}
+              ticket sales
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-cyan-600 flex items-center">
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              Total Transactions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-cyan-700">
               {totalTransactions}
             </div>
-            <div className="flex justify-between text-sm text-blue-600 mt-1">
+            <div className="flex justify-between text-sm text-cyan-600 mt-1">
               <span>All payment attempts</span>
             </div>
           </CardContent>
@@ -433,6 +522,22 @@ export default function AdminPayments() {
                 <SelectItem value="month">Last 30 Days</SelectItem>
               </SelectContent>
             </Select>
+            <Select
+              value={paymentTypeFilter}
+              onValueChange={setPaymentTypeFilter}
+            >
+              <SelectTrigger
+                className="w-full md:w-[180px]"
+                aria-label="Filter by payment type"
+              >
+                <SelectValue placeholder="Payment Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="vote">Voting</SelectItem>
+                <SelectItem value="ticket">Tickets</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               variant="outline"
               onClick={toggleSortDirection}
@@ -463,6 +568,8 @@ export default function AdminPayments() {
                     <TableHead>Transaction ID</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Event</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Details</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Reference</TableHead>
@@ -479,6 +586,48 @@ export default function AdminPayments() {
                       </TableCell>
                       <TableCell>{formatDate(payment.createdAt)}</TableCell>
                       <TableCell>{payment.eventName}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            payment.paymentType === "vote"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {payment.paymentType === "vote"
+                            ? "Voting"
+                            : "Tickets"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        {payment.paymentType === "vote" ? (
+                          <div className="text-sm">
+                            {payment.nomineeName && (
+                              <div className="font-medium">
+                                {payment.nomineeName}
+                              </div>
+                            )}
+                            {payment.nomineeCode && (
+                              <div className="text-gray-500">
+                                Code: {payment.nomineeCode}
+                              </div>
+                            )}
+                            {payment.voteCount && (
+                              <div className="text-gray-500">
+                                {payment.voteCount} votes
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm">
+                            {payment.ticketTypeName && (
+                              <div className="font-medium">
+                                {payment.ticketTypeName}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>{formatCurrency(payment.amount)}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(payment.status)}>

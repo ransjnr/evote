@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQuery, useMutation } from "convex/react";
-import { toast } from "sonner";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { toast } from "sonner";
+import { ConvexError } from "convex/values";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +20,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-// Define error type
-interface ConvexError {
-  message: string;
-}
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function NewEvent() {
   const router = useRouter();
@@ -35,6 +39,11 @@ export default function NewEvent() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [votePrice, setVotePrice] = useState("");
+  const [eventType, setEventType] = useState<
+    "voting_only" | "ticketing_only" | "voting_and_ticketing"
+  >("voting_only");
+  const [venue, setVenue] = useState("");
+  const [maxAttendees, setMaxAttendees] = useState("");
 
   // Get department info
   const department = useQuery(
@@ -53,11 +62,30 @@ export default function NewEvent() {
       return;
     }
 
-    // Validate vote price
-    const votePriceNumeric = parseFloat(votePrice);
-    if (isNaN(votePriceNumeric) || votePriceNumeric <= 0) {
-      toast.error("Vote price must be greater than 0");
-      return;
+    // Validate based on event type
+    if (eventType === "voting_only" || eventType === "voting_and_ticketing") {
+      const votePriceNumeric = parseFloat(votePrice);
+      if (isNaN(votePriceNumeric) || votePriceNumeric <= 0) {
+        toast.error("Vote price must be greater than 0");
+        return;
+      }
+    }
+
+    // Validate venue and max attendees for ticketing events
+    if (
+      eventType === "ticketing_only" ||
+      eventType === "voting_and_ticketing"
+    ) {
+      if (!venue.trim()) {
+        toast.error("Venue is required for ticketed events");
+        return;
+      }
+
+      const maxAttendeesNumeric = parseInt(maxAttendees);
+      if (isNaN(maxAttendeesNumeric) || maxAttendeesNumeric <= 0) {
+        toast.error("Maximum attendees must be greater than 0");
+        return;
+      }
     }
 
     // Convert dates to timestamps
@@ -78,8 +106,13 @@ export default function NewEvent() {
         departmentId: department._id,
         startDate: startTimestamp,
         endDate: endTimestamp,
-        votePrice: votePriceNumeric,
+        votePrice:
+          eventType !== "ticketing_only" ? parseFloat(votePrice) : undefined,
         adminId: admin!._id,
+        eventType,
+        venue: eventType !== "voting_only" ? venue : undefined,
+        maxAttendees:
+          eventType !== "voting_only" ? parseInt(maxAttendees) : undefined,
       });
 
       if (result.success) {
@@ -108,7 +141,7 @@ export default function NewEvent() {
           <CardHeader>
             <CardTitle>Event Details</CardTitle>
             <CardDescription>
-              Fill in the details for your new voting event
+              Fill in the details for your new event
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -131,6 +164,30 @@ export default function NewEvent() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="eventType">Event Type *</Label>
+              <Select
+                value={eventType}
+                onValueChange={(
+                  value:
+                    | "voting_only"
+                    | "ticketing_only"
+                    | "voting_and_ticketing"
+                ) => setEventType(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select event type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="voting_only">Voting Only</SelectItem>
+                  <SelectItem value="ticketing_only">Ticketing Only</SelectItem>
+                  <SelectItem value="voting_and_ticketing">
+                    Voting and Ticketing
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -156,31 +213,54 @@ export default function NewEvent() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="votePrice">Vote Price (₵) *</Label>
-              <Input
-                id="votePrice"
-                type="number"
-                step="0.01"
-                min="0.01"
-                placeholder="e.g. 5.00"
-                value={votePrice}
-                onChange={(e) => setVotePrice(e.target.value)}
-                required
-              />
-              <p className="text-xs text-gray-500">
-                This is the amount voters will pay for each vote
-              </p>
-            </div>
+            {(eventType === "voting_only" ||
+              eventType === "voting_and_ticketing") && (
+              <div className="space-y-2">
+                <Label htmlFor="votePrice">Vote Price (₵) *</Label>
+                <Input
+                  id="votePrice"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="e.g. 5.00"
+                  value={votePrice}
+                  onChange={(e) => setVotePrice(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  This is the amount voters will pay for each vote
+                </p>
+              </div>
+            )}
 
-            <div className="bg-blue-50 p-4 rounded text-sm">
-              <p className="font-medium text-blue-700">Note:</p>
-              <p className="text-blue-600">
-                After creating your event, you&apos;ll need to add categories
-                and nominees. Your event will start as inactive and must be
-                activated manually when ready.
-              </p>
-            </div>
+            {(eventType === "ticketing_only" ||
+              eventType === "voting_and_ticketing") && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="venue">Venue *</Label>
+                  <Input
+                    id="venue"
+                    placeholder="Event venue"
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxAttendees">Maximum Attendees *</Label>
+                  <Input
+                    id="maxAttendees"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 100"
+                    value={maxAttendees}
+                    onChange={(e) => setMaxAttendees(e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
           </CardContent>
           <CardFooter className="flex justify-end space-x-4">
             <Link href="/admin/events">

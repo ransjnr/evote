@@ -10,8 +10,15 @@ export const createEvent = mutation({
     departmentId: v.id("departments"),
     startDate: v.number(),
     endDate: v.number(),
-    votePrice: v.number(),
+    votePrice: v.optional(v.number()),
     adminId: v.id("admins"),
+    eventType: v.union(
+      v.literal("voting_only"),
+      v.literal("ticketing_only"),
+      v.literal("voting_and_ticketing")
+    ),
+    venue: v.optional(v.string()),
+    maxAttendees: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Validate dates
@@ -19,9 +26,31 @@ export const createEvent = mutation({
       throw new ConvexError("End date must be after start date");
     }
 
-    // Validate vote price
-    if (args.votePrice <= 0) {
-      throw new ConvexError("Vote price must be greater than 0");
+    // Validate vote price for events that include voting
+    if (
+      args.eventType === "voting_only" ||
+      args.eventType === "voting_and_ticketing"
+    ) {
+      if (!args.votePrice || args.votePrice <= 0) {
+        throw new ConvexError(
+          "Vote price must be greater than 0 for voting events"
+        );
+      }
+    }
+
+    // Validate venue for events that include ticketing
+    if (
+      args.eventType === "ticketing_only" ||
+      args.eventType === "voting_and_ticketing"
+    ) {
+      if (!args.venue || args.venue.trim() === "") {
+        throw new ConvexError("Venue is required for ticketing events");
+      }
+      if (!args.maxAttendees || args.maxAttendees <= 0) {
+        throw new ConvexError(
+          "Maximum attendees must be greater than 0 for ticketing events"
+        );
+      }
     }
 
     // Insert the new event
@@ -35,6 +64,9 @@ export const createEvent = mutation({
       isActive: false, // Events start as inactive
       createdBy: args.adminId,
       createdAt: Date.now(),
+      eventType: args.eventType,
+      venue: args.venue,
+      maxAttendees: args.maxAttendees,
     });
 
     return { success: true, eventId };
@@ -85,6 +117,49 @@ export const listActiveEvents = query({
   },
 });
 
+// List all events
+export const listAllEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const events = await ctx.db
+      .query("events")
+      .order("desc")
+      .collect();
+
+    return events;
+  },
+});
+
+// List all events with ticketing enabled
+export const listTicketingEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const events = await ctx.db
+      .query("events")
+      .filter((q) => 
+        q.or(
+          q.eq(q.field("eventType"), "ticketing_only"),
+          q.eq(q.field("eventType"), "voting_and_ticketing")
+        )
+      )
+      .order("desc")
+      .collect();
+
+    // Enhance events with department information
+    const enhancedEvents = await Promise.all(
+      events.map(async (event) => {
+        const department = await ctx.db.get(event.departmentId);
+        return {
+          ...event,
+          departmentName: department?.name || "Unknown Department",
+        };
+      })
+    );
+
+    return enhancedEvents;
+  },
+});
+
 // Get event status (upcoming, running, or ended)
 export const getEventStatus = query({
   args: {
@@ -118,6 +193,15 @@ export const updateEvent = mutation({
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
     votePrice: v.optional(v.number()),
+    eventType: v.optional(
+      v.union(
+        v.literal("voting_only"),
+        v.literal("ticketing_only"),
+        v.literal("voting_and_ticketing")
+      )
+    ),
+    venue: v.optional(v.string()),
+    maxAttendees: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const event = await ctx.db.get(args.eventId);
@@ -140,9 +224,39 @@ export const updateEvent = mutation({
       }
     }
 
-    // Validate vote price if provided
-    if (args.votePrice !== undefined && args.votePrice <= 0) {
-      throw new ConvexError("Vote price must be greater than 0");
+    // Determine the event type to use for validation
+    const eventType = args.eventType || event.eventType;
+
+    // Validate vote price for events that include voting
+    if (args.votePrice !== undefined) {
+      if (eventType === "voting_only" || eventType === "voting_and_ticketing") {
+        if (args.votePrice <= 0) {
+          throw new ConvexError(
+            "Vote price must be greater than 0 for voting events"
+          );
+        }
+      }
+    }
+
+    // Validate venue and maxAttendees for events that include ticketing
+    if (
+      args.eventType === "ticketing_only" ||
+      args.eventType === "voting_and_ticketing"
+    ) {
+      if (
+        args.venue !== undefined &&
+        (!args.venue || args.venue.trim() === "")
+      ) {
+        throw new ConvexError("Venue is required for ticketing events");
+      }
+      if (
+        args.maxAttendees !== undefined &&
+        (!args.maxAttendees || args.maxAttendees <= 0)
+      ) {
+        throw new ConvexError(
+          "Maximum attendees must be greater than 0 for ticketing events"
+        );
+      }
     }
 
     // Update the event
@@ -152,6 +266,11 @@ export const updateEvent = mutation({
       ...(args.startDate && { startDate: args.startDate }),
       ...(args.endDate && { endDate: args.endDate }),
       ...(args.votePrice !== undefined && { votePrice: args.votePrice }),
+      ...(args.eventType && { eventType: args.eventType }),
+      ...(args.venue !== undefined && { venue: args.venue }),
+      ...(args.maxAttendees !== undefined && {
+        maxAttendees: args.maxAttendees,
+      }),
     });
 
     return { success: true };

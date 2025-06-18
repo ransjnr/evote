@@ -422,17 +422,58 @@ export default function EventPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <header className="border-b py-4 px-6 bg-white">
+      <header className="py-4 px-6 bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-gray-100">
         <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-primary">
-            eVote
+          <Link
+            href="/"
+            className="text-2xl font-bold text-primary flex items-center"
+          >
+            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
+            Vote
           </Link>
-          <div className="space-x-4">
-            <Link href="/events">
-              <Button variant="outline">Back to Events</Button>
+          <nav className="hidden md:flex space-x-8">
+            <Link
+              href="/events"
+              className="text-primary font-bold border-b-2 border-primary"
+            >
+              Events
+            </Link>
+            <Link
+              href="/features"
+              className="text-gray-600 hover:text-primary transition-colors font-medium"
+            >
+              Features
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-gray-600 hover:text-primary transition-colors font-medium"
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/blog"
+              className="text-gray-600 hover:text-primary transition-colors font-medium"
+            >
+              Blog
+            </Link>
+            <Link
+              href="/etickets"
+              className="text-gray-600 hover:text-primary transition-colors font-medium"
+            >
+              eTicketing
+            </Link>
+          </nav>
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/events"
+              className="hidden md:block text-gray-700 hover:text-primary font-medium transition-colors"
+            >
+              Explore Events
             </Link>
             <Link href="/admin/login">
-              <Button>Admin Login</Button>
+              <Button>
+                Get Started
+              </Button>
             </Link>
           </div>
         </div>

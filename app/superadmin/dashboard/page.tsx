@@ -79,23 +79,23 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">
             Super Admin Dashboard
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-sm lg:text-base text-gray-500 mt-1">
             Welcome back, {admin.name} • System Overview
           </p>
         </div>
 
-        <div className="mt-4 md:mt-0 flex items-center space-x-2">
+        <div className="flex items-center">
           <Badge
             variant="outline"
-            className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1"
+            className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 text-xs lg:text-sm"
           >
-            <Shield className="h-3.5 w-3.5 mr-1" />
+            <Shield className="h-3 w-3 lg:h-3.5 lg:w-3.5 mr-1" />
             Super Admin
           </Badge>
         </div>
@@ -103,10 +103,10 @@ export default function SuperAdminDashboard() {
 
       {/* Alert for pending verifications */}
       {pendingAdminCount > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 flex items-center justify-between">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 lg:px-4 py-3 text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
           <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
-            <span>
+            <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
+            <span className="text-sm lg:text-base">
               <strong>{pendingAdminCount}</strong> admin account
               {pendingAdminCount !== 1 ? "s" : ""} pending verification
             </span>
@@ -114,7 +114,7 @@ export default function SuperAdminDashboard() {
           <Button
             variant="outline"
             size="sm"
-            className="bg-white text-amber-700 border-amber-200 hover:bg-amber-100"
+            className="bg-white text-amber-700 border-amber-200 hover:bg-amber-100 w-full sm:w-auto"
             onClick={navigateToVerifications}
           >
             Review Now
@@ -123,19 +123,19 @@ export default function SuperAdminDashboard() {
       )}
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-xs lg:text-sm font-medium text-gray-500">
               Total Administrators
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="flex items-center">
-              <Users className="h-8 w-8 text-primary/80 mr-3" />
-              <div>
-                <div className="text-2xl font-bold">{totalAdmins}</div>
-                <div className="text-xs text-gray-500 mt-0.5">
+              <Users className="h-6 w-6 lg:h-8 lg:w-8 text-primary/80 mr-2 lg:mr-3 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xl lg:text-2xl font-bold">{totalAdmins}</div>
+                <div className="text-xs text-gray-500 mt-0.5 truncate">
                   {verifiedAdmins} verified, {pendingAdminCount} pending
                 </div>
               </div>
@@ -143,17 +143,17 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-xs lg:text-sm font-medium text-gray-500">
               Pending Verifications
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="flex items-center">
-              <UserCheck className="h-8 w-8 text-indigo-500 mr-3" />
-              <div>
-                <div className="text-2xl font-bold">
+              <UserCheck className="h-6 w-6 lg:h-8 lg:w-8 text-indigo-500 mr-2 lg:mr-3 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xl lg:text-2xl font-bold">
                   {pendingAdminCount}
                   <span className="text-xs font-normal text-gray-500 ml-1">
                     {pendingAdminCount === 1 ? "account" : "accounts"}
@@ -167,17 +167,17 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-xs lg:text-sm font-medium text-gray-500">
               Departments
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="flex items-center">
-              <Building className="h-8 w-8 text-blue-500 mr-3" />
-              <div>
-                <div className="text-2xl font-bold">{departmentCount}</div>
+              <Building className="h-6 w-6 lg:h-8 lg:w-8 text-blue-500 mr-2 lg:mr-3 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xl lg:text-2xl font-bold">{departmentCount}</div>
                 <div className="text-xs text-gray-500 mt-0.5">
                   Active organizational units
                 </div>
@@ -186,17 +186,17 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-xs lg:text-sm font-medium text-gray-500">
               System Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="flex items-center">
-              <Activity className="h-8 w-8 text-green-500 mr-3" />
-              <div>
-                <div className="text-2xl font-bold">Active</div>
+              <Activity className="h-6 w-6 lg:h-8 lg:w-8 text-green-500 mr-2 lg:mr-3 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xl lg:text-2xl font-bold">Active</div>
                 <div className="text-xs text-gray-500 mt-0.5">
                   All systems operational
                 </div>

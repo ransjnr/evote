@@ -95,18 +95,18 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 lg:space-y-8">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
             Welcome back, {admin?.name?.split(" ")[0]}
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-sm sm:text-base text-gray-500 mt-1">
             Here's what's happening with your events today
           </p>
         </div>
         <Link href="/admin/events/new">
-          <Button className="gap-2">
+          <Button className="gap-2 w-full sm:w-auto">
             <PlusCircle className="h-4 w-4" />
             Create New Event
           </Button>
@@ -117,36 +117,36 @@ export default function AdminDashboard() {
       <Card className="overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
         <div className="absolute h-1 top-0 left-0 right-0 bg-gradient-to-r from-primary to-primary/70"></div>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
+          <CardTitle className="text-base lg:text-lg text-gray-800 flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Department Information
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row md:justify-between gap-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 pt-2">
             <div className="flex flex-col">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Name</h3>
-              <p className="font-medium text-gray-800">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Name</h3>
+              <p className="font-medium text-gray-800 text-sm sm:text-base truncate">
                 {department?.name || "Loading..."}
               </p>
             </div>
             <div className="flex flex-col">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Slug</h3>
-              <p className="font-medium text-gray-800">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Slug</h3>
+              <p className="font-medium text-gray-800 text-sm sm:text-base truncate">
                 {department?.slug || "Loading..."}
               </p>
             </div>
             <div className="flex flex-col">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Admin</h3>
-              <p className="font-medium text-gray-800">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Admin</h3>
+              <p className="font-medium text-gray-800 text-sm sm:text-base truncate">
                 {admin?.name || "Loading..."}
               </p>
             </div>
             <div className="flex flex-col">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">
                 Created
               </h3>
-              <p className="font-medium text-gray-800">
+              <p className="font-medium text-gray-800 text-sm sm:text-base">
                 {department
                   ? new Date(department.createdAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -161,131 +161,130 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-4 lg:p-6">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">
                   Total Events
                 </p>
-                <div className="flex items-baseline">
-                  <h3 className="text-3xl font-bold text-gray-800">
+                <div className="flex items-baseline flex-wrap gap-1">
+                  <h3 className="text-2xl lg:text-3xl font-bold text-gray-800">
                     {events?.length || 0}
                   </h3>
-                  <span className="ml-2 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                     Managed
                   </span>
                 </div>
               </div>
-              <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 lg:h-12 lg:w-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Calendar className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-gray-100">
               <Link
                 href="/admin/events"
-                className="text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
+                className="text-xs sm:text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
               >
                 View all events
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 ml-1" />
               </Link>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-4 lg:p-6">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">
                   Active Events
                 </p>
-                <div className="flex items-baseline">
-                  <h3 className="text-3xl font-bold text-gray-800">
+                <div className="flex items-baseline flex-wrap gap-1">
+                  <h3 className="text-2xl lg:text-3xl font-bold text-gray-800">
                     {stats.activeEventsCount}
                   </h3>
-                  <span className="ml-2 text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                    Running
+                  <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                    Live
                   </span>
                 </div>
               </div>
-              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Activity className="h-6 w-6 text-green-600" />
+              <div className="h-10 w-10 lg:h-12 lg:w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Activity className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="text-sm text-gray-500">
-                <span className="inline-block h-2 w-2 bg-green-500 rounded-full mr-1"></span>{" "}
-                Live updates
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">
-                  Total Votes
-                </p>
-                <div className="flex items-baseline">
-                  <h3 className="text-3xl font-bold text-gray-800">
-                    {stats.totalVotes}
-                  </h3>
-                  {stats.totalVotes > 0 && (
-                    <span className="ml-2 text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                      Counted
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Vote className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-gray-100">
               <Link
-                href="/admin/analytics"
-                className="text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
+                href="/admin/events"
+                className="text-xs sm:text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
               >
-                View analytics
-                <ChevronRight className="h-4 w-4 ml-1" />
+                Manage events
+                <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 ml-1" />
               </Link>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-4 lg:p-6">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">
-                  Revenue
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">
+                  Total Votes
                 </p>
-                <div className="flex items-baseline">
-                  <h3 className="text-3xl font-bold text-gray-800">
-                    {formatCurrency(stats.totalAmount)}
+                <div className="flex items-baseline flex-wrap gap-1">
+                  <h3 className="text-2xl lg:text-3xl font-bold text-gray-800">
+                    {stats.totalVotes}
                   </h3>
-                  {stats.totalAmount > 0 && (
-                    <span className="ml-2 text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
-                      Earned
-                    </span>
-                  )}
+                  <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                    Cast
+                  </span>
                 </div>
               </div>
-              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-purple-600" />
+              <div className="h-10 w-10 lg:h-12 lg:w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Vote className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600" />
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-gray-100">
+              <Link
+                href="/admin/analytics"
+                className="text-xs sm:text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
+              >
+                View analytics
+                <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 ml-1" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">
+                  Total Revenue
+                </p>
+                <div className="flex items-baseline flex-wrap gap-1">
+                  <h3 className="text-xl lg:text-2xl font-bold text-gray-800">
+                    {formatCurrency(stats.totalAmount)}
+                  </h3>
+                  <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Earned
+                  </span>
+                </div>
+              </div>
+              <div className="h-10 w-10 lg:h-12 lg:w-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="h-5 w-5 lg:h-6 lg:w-6 text-emerald-600" />
+              </div>
+            </div>
+            <div className="mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-gray-100">
               <Link
                 href="/admin/payments"
-                className="text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
+                className="text-xs sm:text-sm font-medium text-primary flex items-center hover:text-primary/80 transition-colors"
               >
                 View payments
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 ml-1" />
               </Link>
             </div>
           </CardContent>

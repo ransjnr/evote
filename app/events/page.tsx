@@ -32,6 +32,8 @@ import {
   Sparkles,
   Tag,
   Clock,
+  Ticket,
+  MapPin,
 } from "lucide-react";
 import { Footer } from "@/components/ui/footer";
 
@@ -44,8 +46,11 @@ interface Event {
   endDate: number;
   createdBy: string;
   createdAt: number;
-  votePrice: number;
-  organization?: string;
+  votePrice?: number;
+  eventType: "voting_only" | "ticketing_only" | "voting_and_ticketing";
+  venue?: string;
+  maxAttendees?: number;
+  isActive: boolean;
 }
 
 // Define event status types
@@ -55,6 +60,9 @@ export default function EventsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<EventStatus>("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | Event["eventType"]>(
+    "all"
+  );
   const [showFilters, setShowFilters] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -145,9 +153,13 @@ export default function EventsPage() {
       const matchesStatus =
         statusFilter === "all" || statusFilter === eventStatus;
 
-      return matchesSearch && matchesStatus;
+      // Apply type filter
+      const matchesType =
+        typeFilter === "all" || event.eventType === typeFilter;
+
+      return matchesSearch && matchesStatus && matchesType;
     });
-  }, [activeEvents, searchQuery, statusFilter]);
+  }, [activeEvents, searchQuery, statusFilter, typeFilter]);
 
   // Get counts for UI
   const eventCounts = useMemo(
@@ -518,7 +530,7 @@ export default function EventsPage() {
 
                         <div className="flex items-center">
                           <div className="px-3 py-1.5 bg-primary/10 rounded-lg text-primary font-medium text-sm">
-                            ₵{event.votePrice.toFixed(2)} per vote
+                            ₵{event.votePrice?.toFixed(2)} per vote
                           </div>
                         </div>
                       </CardContent>

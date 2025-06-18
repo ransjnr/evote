@@ -8,7 +8,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full overflow-x-auto border rounded-lg"
     >
       <table
         data-slot="table"
@@ -23,7 +23,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn("bg-gray-50/50 [&_tr]:border-b", className)}
       {...props}
     />
   )
@@ -70,7 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-foreground h-10 px-2 lg:px-4 text-left align-middle font-medium text-xs lg:text-sm [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}
@@ -83,7 +83,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "p-2 lg:p-4 align-middle text-xs lg:text-sm [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}
@@ -104,6 +104,32 @@ function TableCaption({
   )
 }
 
+// Mobile-friendly responsive table component
+function ResponsiveTable({ 
+  children, 
+  className,
+  fallbackMessage = "No data available",
+  ...props 
+}: React.ComponentProps<"div"> & {
+  fallbackMessage?: string;
+}) {
+  return (
+    <div className={cn("w-full", className)} {...props}>
+      {/* Desktop table view */}
+      <div className="hidden lg:block">
+        <Table>
+          {children}
+        </Table>
+      </div>
+      
+      {/* Mobile card view - to be implemented by parent components */}
+      <div className="lg:hidden space-y-3">
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export {
   Table,
   TableHeader,
@@ -113,4 +139,5 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  ResponsiveTable,
 }

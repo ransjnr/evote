@@ -57,10 +57,10 @@ export default function Home() {
               Blog
             </Link>
             <Link
-              href="/eticket"
+              href="/etickets"
               className="text-gray-600 hover:text-primary transition-colors font-medium"
             >
-              eTicket
+              eTicketing
             </Link>
           </nav>
           <div className="flex items-center space-x-4">
@@ -120,7 +120,7 @@ export default function Home() {
                   Explore Events
                 </Button>
               </Link>
-              <Link href="/eticket">
+              <Link href="/etickets">
                 <Button
                   size="lg"
                   variant="outline"
