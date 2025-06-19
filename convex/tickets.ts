@@ -654,3 +654,19 @@ export const adminCleanupExpiredPayments = mutation({
     };
   },
 });
+
+// Get a single ticket type by ID
+export const getTicketType = query({
+  args: {
+    ticketTypeId: v.id("ticketTypes"),
+  },
+  handler: async (ctx, args) => {
+    const ticketType = await ctx.db.get(args.ticketTypeId);
+
+    if (!ticketType) {
+      throw new ConvexError("Ticket type not found");
+    }
+
+    return ticketType;
+  },
+});

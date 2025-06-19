@@ -6,6 +6,8 @@ This document provides instructions on how to set up Paystack for processing pay
 
 eVote uses Paystack to process payments for both votes and tickets. The integration handles secure payment processing with proper transaction management and confirmation emails.
 
+**Note: This application uses a custom React 19-compatible Paystack integration using `@paystack/inline-js` directly instead of the `react-paystack` library for better compatibility and future-proofing.**
+
 ## Setup Instructions
 
 ### 1. Environment Configuration

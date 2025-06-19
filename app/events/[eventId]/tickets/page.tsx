@@ -47,8 +47,7 @@ import {
 } from "@/lib/utils/ticket-utils";
 import { Footer } from "@/components/ui/footer";
 import Link from "next/link";
-// @ts-ignore
-import { PaystackButton } from "react-paystack";
+import { PaystackButton } from "@/components/paystack/PaystackButton";
 
 export default function PurchaseTickets() {
   const params = useParams();

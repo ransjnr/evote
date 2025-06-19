@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { Footer } from "@/components/ui/footer";
 import Link from "next/link";
-import QRCode from 'qrcode';
+import QRCode from "qrcode";
 
 export default function TicketConfirmation() {
   const params = useParams();
@@ -72,7 +72,7 @@ export default function TicketConfirmation() {
       setIsGeneratingQR(true);
       const generateQRCodes = async () => {
         const qrCodeMap: { [key: string]: string } = {};
-        
+
         for (const ticket of tickets) {
           const qrData = JSON.stringify({
             ticketCode: ticket.ticketCode,
@@ -87,16 +87,16 @@ export default function TicketConfirmation() {
               width: 200,
               margin: 2,
               color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-              }
+                dark: "#000000",
+                light: "#FFFFFF",
+              },
             });
             qrCodeMap[ticket._id] = qrCodeDataURL;
           } catch (error) {
-            console.error('Error generating QR code:', error);
+            console.error("Error generating QR code:", error);
           }
         }
-        
+
         setQrCodes(qrCodeMap);
         setIsGeneratingQR(false);
       };
@@ -144,7 +144,7 @@ export default function TicketConfirmation() {
   const handleDownloadQR = (ticketId: string, ticketCode: string) => {
     const qrDataURL = qrCodes[ticketId];
     if (qrDataURL) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = qrDataURL;
       link.download = `ticket-${ticketCode}-qr.png`;
       document.body.appendChild(link);
@@ -165,7 +165,7 @@ export default function TicketConfirmation() {
       try {
         await navigator.share(shareData);
       } catch (error) {
-        console.log('Error sharing:', error);
+        console.log("Error sharing:", error);
       }
     } else {
       // Fallback to copying link
@@ -263,15 +263,25 @@ export default function TicketConfirmation() {
                 <CardTitle className="flex items-center justify-between">
                   <span>🎫 Ticket Purchase Confirmation</span>
                   <Badge
-                    variant={payment.status === "succeeded" ? "default" : "secondary"}
-                    className={payment.status === "succeeded" ? "bg-green-100 text-green-800" : ""}
+                    variant={
+                      payment.status === "succeeded" ? "default" : "secondary"
+                    }
+                    className={
+                      payment.status === "succeeded"
+                        ? "bg-green-100 text-green-800"
+                        : ""
+                    }
                   >
-                    {payment.status === "succeeded" ? "✅ Confirmed" : "⏳ Processing"}
+                    {payment.status === "succeeded"
+                      ? "✅ Confirmed"
+                      : "⏳ Processing"}
                   </Badge>
                 </CardTitle>
-                <CardDescription>Transaction ID: {transactionId}</CardDescription>
+                <CardDescription>
+                  Transaction ID: {transactionId}
+                </CardDescription>
               </CardHeader>
-              
+
               <CardContent className="space-y-6">
                 {isProcessing ? (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -280,8 +290,8 @@ export default function TicketConfirmation() {
                       Processing Payment
                     </h3>
                     <p className="text-gray-500 text-center">
-                      Please wait while we process your payment. This may take a few
-                      moments.
+                      Please wait while we process your payment. This may take a
+                      few moments.
                     </p>
                   </div>
                 ) : (
@@ -290,16 +300,21 @@ export default function TicketConfirmation() {
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
                       <CheckCircle className="w-6 h-6 text-green-600" />
                       <div>
-                        <h3 className="font-semibold text-green-800">Payment Successful!</h3>
+                        <h3 className="font-semibold text-green-800">
+                          Payment Successful!
+                        </h3>
                         <p className="text-green-700 text-sm">
-                          Your tickets have been confirmed and a confirmation email has been sent to {tickets[0]?.purchaserEmail}
+                          Your tickets have been confirmed and a confirmation
+                          email has been sent to {tickets[0]?.purchaserEmail}
                         </p>
                       </div>
                     </div>
 
                     {/* Event Details */}
                     <div>
-                      <h3 className="text-lg font-semibold mb-4">Event Details</h3>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Event Details
+                      </h3>
                       <div className="space-y-2">
                         <p className="text-xl font-bold">{event.name}</p>
                         {event.description && (
@@ -327,7 +342,9 @@ export default function TicketConfirmation() {
 
                     {/* Ticket Details */}
                     <div>
-                      <h3 className="text-lg font-semibold mb-4">Ticket Details</h3>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Ticket Details
+                      </h3>
                       <div className="space-y-4">
                         <div className="flex justify-between items-baseline">
                           <div>
@@ -343,24 +360,27 @@ export default function TicketConfirmation() {
                           </p>
                         </div>
 
-                        {ticketType.benefits && ticketType.benefits.length > 0 && (
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="font-medium mb-2">Included Benefits:</p>
-                            <ul className="space-y-1">
-                              {ticketType.benefits.map(
-                                (benefit: string, index: number) => (
-                                  <li
-                                    key={index}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>{benefit}</span>
-                                  </li>
-                                )
-                              )}
-                            </ul>
-                          </div>
-                        )}
+                        {ticketType.benefits &&
+                          ticketType.benefits.length > 0 && (
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <p className="font-medium mb-2">
+                                Included Benefits:
+                              </p>
+                              <ul className="space-y-1">
+                                {ticketType.benefits.map(
+                                  (benefit: string, index: number) => (
+                                    <li
+                                      key={index}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <CheckCircle className="w-4 h-4 text-green-500" />
+                                      <span>{benefit}</span>
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
                       </div>
                     </div>
 
@@ -368,10 +388,15 @@ export default function TicketConfirmation() {
 
                     {/* Your Tickets with QR Codes */}
                     <div>
-                      <h3 className="text-lg font-semibold mb-4">Your Tickets</h3>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Your Tickets
+                      </h3>
                       <div className="space-y-4">
                         {tickets.map((ticket) => (
-                          <Card key={ticket._id} className="border-2 border-primary/20">
+                          <Card
+                            key={ticket._id}
+                            className="border-2 border-primary/20"
+                          >
                             <CardContent className="pt-6">
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                                 {/* Ticket Info */}
@@ -394,15 +419,23 @@ export default function TicketConfirmation() {
                                           ? "default"
                                           : "secondary"
                                       }
-                                      className={ticket.status === "confirmed" ? "bg-green-100 text-green-800" : ""}
+                                      className={
+                                        ticket.status === "confirmed"
+                                          ? "bg-green-100 text-green-800"
+                                          : ""
+                                      }
                                     >
-                                      {ticket.status === "confirmed" ? "✅ Confirmed" : ticket.status}
+                                      {ticket.status === "confirmed"
+                                        ? "✅ Confirmed"
+                                        : ticket.status}
                                     </Badge>
                                   </div>
-                                  
+
                                   {/* Ticket Code */}
                                   <div className="bg-primary/5 p-3 rounded-lg border border-primary/20">
-                                    <p className="text-sm text-gray-600 mb-1">Ticket Code</p>
+                                    <p className="text-sm text-gray-600 mb-1">
+                                      Ticket Code
+                                    </p>
                                     <div className="flex items-center justify-between">
                                       <code className="text-lg font-mono font-bold text-primary">
                                         {ticket.ticketCode}
@@ -410,7 +443,11 @@ export default function TicketConfirmation() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleCopyTicketCode(ticket.ticketCode)}
+                                        onClick={() =>
+                                          handleCopyTicketCode(
+                                            ticket.ticketCode
+                                          )
+                                        }
                                       >
                                         <Copy className="w-4 h-4" />
                                       </Button>
@@ -422,7 +459,12 @@ export default function TicketConfirmation() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => handleDownloadQR(ticket._id, ticket.ticketCode)}
+                                      onClick={() =>
+                                        handleDownloadQR(
+                                          ticket._id,
+                                          ticket.ticketCode
+                                        )
+                                      }
                                       disabled={!qrCodes[ticket._id]}
                                     >
                                       <Download className="w-4 h-4 mr-2" />
@@ -444,13 +486,15 @@ export default function TicketConfirmation() {
                                   {isGeneratingQR ? (
                                     <div className="flex flex-col items-center">
                                       <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
-                                      <p className="text-sm text-gray-500">Generating QR...</p>
+                                      <p className="text-sm text-gray-500">
+                                        Generating QR...
+                                      </p>
                                     </div>
                                   ) : qrCodes[ticket._id] ? (
                                     <div>
-                                      <img 
-                                        src={qrCodes[ticket._id]} 
-                                        alt="Ticket QR Code" 
+                                      <img
+                                        src={qrCodes[ticket._id]}
+                                        alt="Ticket QR Code"
                                         className="w-32 h-32 mx-auto border rounded-lg"
                                       />
                                       <p className="text-xs text-gray-500 mt-2">
@@ -476,7 +520,9 @@ export default function TicketConfirmation() {
                     {/* Total Amount */}
                     <div className="bg-primary/5 p-4 rounded-lg">
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-lg">Total Amount Paid</span>
+                        <span className="font-medium text-lg">
+                          Total Amount Paid
+                        </span>
                         <span className="text-2xl font-bold text-primary">
                           ₵{payment.amount.toFixed(2)}
                         </span>
@@ -485,7 +531,7 @@ export default function TicketConfirmation() {
                   </>
                 )}
               </CardContent>
-              
+
               <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
                 <Button
                   variant="outline"
@@ -497,7 +543,7 @@ export default function TicketConfirmation() {
                 <div className="flex gap-2 w-full sm:w-auto">
                   {payment.status === "succeeded" && (
                     <>
-                      <Button 
+                      <Button
                         onClick={() => window.print()}
                         className="flex-1 sm:flex-none"
                       >
