@@ -109,7 +109,6 @@ export const getNominee = query({
   },
 });
 
-
 // List nominees by category
 export const listNomineesByCategory = query({
   args: {
@@ -154,7 +153,7 @@ export const listNomineesByDepartment = query({
 
     // Get all categories for these events
     const eventIds = events.map((event) => event._id);
-    let allCategories = [];
+    let allCategories: any[] = [];
 
     for (const eventId of eventIds) {
       const categories = await ctx.db
@@ -171,7 +170,7 @@ export const listNomineesByDepartment = query({
 
     // Get all nominees for these categories
     const categoryIds = allCategories.map((category) => category._id);
-    let allNominees = [];
+    let allNominees: any[] = [];
 
     for (const categoryId of categoryIds) {
       const nominees = await ctx.db

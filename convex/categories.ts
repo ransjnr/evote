@@ -81,7 +81,7 @@ export const listCategoriesByDepartment = query({
     }
 
     // Get all categories for all these events
-    let allCategories = [];
+    let allCategories: any[] = [];
 
     for (const event of events) {
       const categories = await ctx.db

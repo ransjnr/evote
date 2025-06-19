@@ -50,7 +50,7 @@ export const initializePayment = mutation({
     const transactionId = `vote_${Date.now()}_vc${voteCount}_${Math.random().toString(36).substring(2, 10)}`;
 
     // Calculate total amount based on vote price and count
-    const totalAmount = event.votePrice * voteCount;
+    const totalAmount = (event.votePrice || 0) * voteCount;
 
     // Create pending payment in the database
     const paymentId = await ctx.db.insert("payments", {
@@ -60,6 +60,7 @@ export const initializePayment = mutation({
       status: "pending",
       eventId: args.eventId,
       paymentReference: "",
+      paymentType: "vote",
       createdAt: Date.now(),
     });
 
@@ -347,7 +348,7 @@ export const getPaymentsByDepartment = query({
     const eventIds = events.map((event) => event._id);
 
     // Initialize an array to store all payments
-    let allPayments = [];
+    let allPayments: any[] = [];
 
     // For each event, get its payments and add them to the array
     for (const eventId of eventIds) {
@@ -414,7 +415,7 @@ export const initializePaymentByCode = mutation({
     const transactionId = `vote_${args.nomineeCode}_${Date.now()}_vc${voteCount}_${Math.random().toString(36).substring(2, 5)}`;
 
     // Calculate total amount based on vote price and count
-    const totalAmount = event.votePrice * voteCount;
+    const totalAmount = (event.votePrice || 0) * voteCount;
 
     // Create pending payment in the database
     const paymentId = await ctx.db.insert("payments", {
@@ -424,6 +425,7 @@ export const initializePaymentByCode = mutation({
       status: "pending",
       eventId: event._id,
       paymentReference: "",
+      paymentType: "vote",
       createdAt: Date.now(),
     });
 
@@ -561,7 +563,7 @@ export const getNomineeByCode = query({
     // Find the nominee by code
     const nominee = await ctx.db
       .query("nominees")
-      .withIndex("by_code", q => q.eq("code", args.code))
+      .withIndex("by_code", (q) => q.eq("code", args.code))
       .first();
 
     if (!nominee) {
@@ -586,7 +588,7 @@ export const getNomineeByCode = query({
     // Get vote count for this nominee
     const votes = await ctx.db
       .query("votes")
-      .withIndex("by_nominee", q => q.eq("nomineeId", nominee._id))
+      .withIndex("by_nominee", (q) => q.eq("nomineeId", nominee._id))
       .collect();
 
     return {
@@ -610,11 +612,13 @@ export const getNomineeByCode = query({
         startDate: event.startDate,
         endDate: event.endDate,
       },
-      department: department ? {
-        id: department._id,
-        name: department.name,
-        slug: department.slug,
-      } : null,
+      department: department
+        ? {
+            id: department._id,
+            name: department.name,
+            slug: department.slug,
+          }
+        : null,
     };
   },
 });

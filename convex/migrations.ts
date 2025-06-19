@@ -207,12 +207,12 @@ export const createSuperAdmin = mutation({
 
 // Inside the migrateNomineeRecords function, update the filter implementation
 // This is a simple utility function we'll add to help count department nominees
-async function getNomineeCountForDepartment(ctx, deptAbbrev) {
+async function getNomineeCountForDepartment(ctx: any, deptAbbrev: string) {
   // Use proper Convex filter syntax - between prefix and prefix+max unicode char
   const nominees = await ctx.db
     .query("nominees")
     .filter(
-      (q) =>
+      (q: any) =>
         q.gt(q.field("code"), deptAbbrev) &&
         q.lt(q.field("code"), deptAbbrev + "\uffff")
     )

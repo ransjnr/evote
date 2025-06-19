@@ -95,7 +95,7 @@ export const updateDepartment = mutation({
     if (args.slug && args.slug !== department.slug) {
       const existingDepartment = await ctx.db
         .query("departments")
-        .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+        .withIndex("by_slug", (q) => q.eq("slug", args.slug!))
         .first();
 
       if (existingDepartment) {

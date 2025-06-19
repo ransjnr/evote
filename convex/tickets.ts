@@ -370,12 +370,12 @@ export const validateTicket = mutation({
       throw new ConvexError("Ticket not found");
     }
 
-    if (ticket.status !== "confirmed") {
-      throw new ConvexError("Ticket is not valid for use");
-    }
-
     if (ticket.status === "used") {
       throw new ConvexError("Ticket has already been used");
+    }
+
+    if (ticket.status !== "confirmed") {
+      throw new ConvexError("Ticket is not valid for use");
     }
 
     // Mark ticket as used
