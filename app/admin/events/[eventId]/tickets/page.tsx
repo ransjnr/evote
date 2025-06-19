@@ -44,7 +44,9 @@ export default function TicketTypes() {
   const eventId = params.eventId as string;
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<string | null>(null);
+  const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<
+    string | null
+  >(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -67,6 +69,9 @@ export default function TicketTypes() {
   const createTicketType = useMutation(api.tickets.createTicketType);
   const updateTicketType = useMutation(api.tickets.updateTicketType);
   const deleteTicketType = useMutation(api.tickets.deleteTicketType);
+  const adminCleanupExpiredPayments = useMutation(
+    api.tickets.adminCleanupExpiredPayments
+  );
 
   const resetForm = () => {
     setName("");
@@ -86,8 +91,16 @@ export default function TicketTypes() {
     setPrice(ticketType.price.toString());
     setQuantity(ticketType.quantity.toString());
     setBenefits(ticketType.benefits?.join("\n") || "");
-    setSaleStartDate(ticketType.saleStartDate ? new Date(ticketType.saleStartDate).toISOString().slice(0, 16) : "");
-    setSaleEndDate(ticketType.saleEndDate ? new Date(ticketType.saleEndDate).toISOString().slice(0, 16) : "");
+    setSaleStartDate(
+      ticketType.saleStartDate
+        ? new Date(ticketType.saleStartDate).toISOString().slice(0, 16)
+        : ""
+    );
+    setSaleEndDate(
+      ticketType.saleEndDate
+        ? new Date(ticketType.saleEndDate).toISOString().slice(0, 16)
+        : ""
+    );
     setIsEditMode(true);
     setSelectedTicketTypeId(ticketType._id);
     setIsDialogOpen(true);
@@ -157,8 +170,12 @@ export default function TicketTypes() {
           price: priceNumeric,
           quantity: quantityNumeric,
           benefits: benefitsArray.length > 0 ? benefitsArray : undefined,
-          saleStartDate: saleStartDate ? new Date(saleStartDate).getTime() : undefined,
-          saleEndDate: saleEndDate ? new Date(saleEndDate).getTime() : undefined,
+          saleStartDate: saleStartDate
+            ? new Date(saleStartDate).getTime()
+            : undefined,
+          saleEndDate: saleEndDate
+            ? new Date(saleEndDate).getTime()
+            : undefined,
         });
 
         toast.success("Ticket type updated successfully!");
@@ -171,8 +188,12 @@ export default function TicketTypes() {
           quantity: quantityNumeric,
           benefits: benefitsArray.length > 0 ? benefitsArray : undefined,
           adminId: admin!._id,
-          saleStartDate: saleStartDate ? new Date(saleStartDate).getTime() : undefined,
-          saleEndDate: saleEndDate ? new Date(saleEndDate).getTime() : undefined,
+          saleStartDate: saleStartDate
+            ? new Date(saleStartDate).getTime()
+            : undefined,
+          saleEndDate: saleEndDate
+            ? new Date(saleEndDate).getTime()
+            : undefined,
         });
 
         toast.success("Ticket type created successfully!");
@@ -182,7 +203,30 @@ export default function TicketTypes() {
       setIsDialogOpen(false);
     } catch (error: unknown) {
       const convexError = error as ConvexError;
-      toast.error(convexError.message || `Failed to ${isEditMode ? "update" : "create"} ticket type`);
+      toast.error(
+        convexError.message ||
+          `Failed to ${isEditMode ? "update" : "create"} ticket type`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCleanupExpiredPayments = async () => {
+    if (!admin?._id) return;
+
+    setIsLoading(true);
+    try {
+      const result = await adminCleanupExpiredPayments({
+        adminId: admin._id,
+      });
+
+      toast.success(
+        `Cleanup completed! Cleaned ${result.expiredPayments} expired payments and ${result.cleanedTickets} pending tickets.`
+      );
+    } catch (error: unknown) {
+      const convexError = error as ConvexError;
+      toast.error(convexError.message || "Failed to cleanup expired payments");
     } finally {
       setIsLoading(false);
     }
@@ -219,24 +263,40 @@ export default function TicketTypes() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Ticket Types</h1>
-          <p className="text-gray-500 mt-1">Manage ticket types for {event.name}</p>
+          <p className="text-gray-500 mt-1">
+            Manage ticket types for {event.name}
+          </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              resetForm();
-              setIsDialogOpen(true);
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Ticket Type
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleCleanupExpiredPayments}
+            disabled={isLoading}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Cleanup Expired
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Ticket Type
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>{isEditMode ? "Edit" : "Add"} Ticket Type</DialogTitle>
+                <DialogTitle>
+                  {isEditMode ? "Edit" : "Add"} Ticket Type
+                </DialogTitle>
                 <DialogDescription>
-                  {isEditMode ? "Update the" : "Create a new"} ticket type for this event
+                  {isEditMode ? "Update the" : "Create a new"} ticket type for
+                  this event
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -291,7 +351,9 @@ export default function TicketTypes() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="benefits">Benefits (Optional, one per line)</Label>
+                  <Label htmlFor="benefits">
+                    Benefits (Optional, one per line)
+                  </Label>
                   <Input
                     id="benefits"
                     placeholder="Enter benefits, one per line"
@@ -307,7 +369,9 @@ export default function TicketTypes() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="saleStartDate">Sale Start Date (Optional)</Label>
+                    <Label htmlFor="saleStartDate">
+                      Sale Start Date (Optional)
+                    </Label>
                     <Input
                       id="saleStartDate"
                       type="datetime-local"
@@ -317,7 +381,9 @@ export default function TicketTypes() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="saleEndDate">Sale End Date (Optional)</Label>
+                    <Label htmlFor="saleEndDate">
+                      Sale End Date (Optional)
+                    </Label>
                     <Input
                       id="saleEndDate"
                       type="datetime-local"
@@ -339,12 +405,19 @@ export default function TicketTypes() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Create")}
+                  {isLoading
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Creating..."
+                    : isEditMode
+                      ? "Update"
+                      : "Create"}
                 </Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {ticketTypes.length === 0 ? (
@@ -353,14 +426,17 @@ export default function TicketTypes() {
             <Ticket className="w-12 h-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Ticket Types Yet</h3>
             <p className="text-gray-500 text-center mb-4">
-              Create your first ticket type to start selling tickets for this event.
+              Create your first ticket type to start selling tickets for this
+              event.
             </p>
             <Dialog>
               <DialogTrigger asChild>
-                <Button onClick={() => {
-                  resetForm();
-                  setIsDialogOpen(true);
-                }}>
+                <Button
+                  onClick={() => {
+                    resetForm();
+                    setIsDialogOpen(true);
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Ticket Type
                 </Button>
@@ -387,23 +463,32 @@ export default function TicketTypes() {
                     <div>
                       <p className="font-medium">{ticketType.name}</p>
                       {ticketType.description && (
-                        <p className="text-sm text-gray-500">{ticketType.description}</p>
+                        <p className="text-sm text-gray-500">
+                          {ticketType.description}
+                        </p>
                       )}
-                      {ticketType.benefits && ticketType.benefits.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {ticketType.benefits.map((benefit, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {benefit}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+                      {ticketType.benefits &&
+                        ticketType.benefits.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {ticketType.benefits.map((benefit, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {benefit}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                     </div>
                   </TableCell>
                   <TableCell>₵{ticketType.price.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={ticketType.remaining > 0 ? "success" : "destructive"}
+                      variant={
+                        ticketType.remaining > 0 ? "success" : "destructive"
+                      }
                     >
                       {ticketType.remaining} / {ticketType.quantity}
                     </Badge>
@@ -411,8 +496,18 @@ export default function TicketTypes() {
                   <TableCell>
                     {ticketType.saleStartDate && ticketType.saleEndDate ? (
                       <div className="text-sm">
-                        <p>From: {new Date(ticketType.saleStartDate).toLocaleDateString()}</p>
-                        <p>To: {new Date(ticketType.saleEndDate).toLocaleDateString()}</p>
+                        <p>
+                          From:{" "}
+                          {new Date(
+                            ticketType.saleStartDate
+                          ).toLocaleDateString()}
+                        </p>
+                        <p>
+                          To:{" "}
+                          {new Date(
+                            ticketType.saleEndDate
+                          ).toLocaleDateString()}
+                        </p>
                       </div>
                     ) : (
                       <span className="text-gray-500">No restrictions</span>
@@ -451,7 +546,8 @@ export default function TicketTypes() {
           <DialogHeader>
             <DialogTitle>Delete Ticket Type</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this ticket type? This action cannot be undone.
+              Are you sure you want to delete this ticket type? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -473,4 +569,4 @@ export default function TicketTypes() {
       </Dialog>
     </div>
   );
-} 
+}

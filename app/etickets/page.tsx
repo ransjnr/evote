@@ -137,8 +137,14 @@ export default function ETicketsPage() {
             href="/"
             className="text-2xl font-bold text-primary flex items-center"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
+            <img
+              src="/Pollix icon.png"
+              alt="Pollix"
+              width="32"
+              height="32"
+              className="mr-2 rounded"
+            />
+            Pollix
           </Link>
           <nav className="hidden md:flex space-x-8">
             <Link

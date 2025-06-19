@@ -17,6 +17,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import React from "react";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -28,8 +29,18 @@ export default function Home() {
             href="/"
             className="text-2xl font-bold text-primary flex items-center"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
+            <Image
+              src="/Pollix icon.png"
+              alt="Pollix"
+              width={65}
+              height={65}
+              style={{
+                backgroundColor: "green",
+                padding: "10px",
+                borderRadius: "50%",
+              }}
+              className="mr-2 rounded"
+            />
           </Link>
           <nav className="hidden md:flex space-x-8">
             <Link
@@ -117,28 +128,21 @@ export default function Home() {
                   variant="outline"
                   className="w-full sm:w-auto bg-white text-gray-800 border-none"
                 >
-                  Explore Events
+                  Start Voting Event
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
+
               <Link href="/etickets">
                 <Button
                   size="lg"
                   variant="outline"
                   className="w-full sm:w-auto bg-green-400 text-white border-none"
                 >
-                  eTicketing
+                  Browse Tickets
+                  <ArrowUpRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              {/* <Link href="/admin/login">
-                <Button
-                  size="lg"
-                  variant="gradient"
-                  className="w-full sm:w-auto"
-                >
-                  Admin Dashboard
-                  <ArrowUpRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link> */}
             </div>
           </div>
 
@@ -180,81 +184,37 @@ export default function Home() {
                       <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">
                         3
                       </div>
-                      <span>Most Innovative</span>
+                      <span>Best Innovation</span>
                     </div>
-                    <span className="text-xs text-gray-500">6 nominees</span>
+                    <span className="text-xs text-gray-500">15 nominees</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-6">
-                  <Button className="w-full" variant="gradient">
-                    Vote Now
-                  </Button>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-800">245</div>
+                  <div className="text-xs text-gray-500">Total Votes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-800">₵1,225</div>
+                  <div className="text-xs text-gray-500">Revenue</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-800">35</div>
+                  <div className="text-xs text-gray-500">Nominees</div>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium"
-                    >
-                      {i}
-                    </div>
-                  ))}
-                </div>
-                <div className="text-sm text-gray-500">
-                  <span className="font-bold text-gray-700">200+</span> votes
-                  today
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                <span className="text-sm text-gray-600">
+                  📈 +12% from last event
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                  <span className="text-xs text-gray-500">Live</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Modern bridge/divider */}
-        <div className="absolute bottom-0 left-0 right-0 overflow-hidden">
-          <div className="relative h-20">
-            {/* Overlapping curved shapes */}
-            <div className="absolute bottom-0 w-full">
-              <svg
-                viewBox="0 0 1440 96"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full"
-              >
-                <path
-                  d="M0 96L1440 96V54.6C1314 78.6 1186 96 1080 96C891 96 697 32 471 32C331 32 160 49.3 0 84V96Z"
-                  fill="rgba(255, 255, 255, 0.2)"
-                />
-              </svg>
-            </div>
-            <div className="absolute bottom-0 w-full">
-              <svg
-                viewBox="0 0 1440 80"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full"
-              >
-                <path
-                  d="M0 80L1440 80V39C1321.5 15.5 1193 0 1080 0C891 0 699 64 471 64C331 64 160 48 0 15V80Z"
-                  fill="rgba(255, 255, 255, 0.25)"
-                />
-              </svg>
-            </div>
-            <div className="absolute bottom-0 w-full">
-              <svg
-                viewBox="0 0 1440 64"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full"
-              >
-                <path
-                  d="M0 64L1440 64V24C1379 35 1325 40 1080 40C891 40 688 8 471 8C331 8 150 16 0 32V64Z"
-                  fill="white"
-                />
-              </svg>
             </div>
           </div>
         </div>
@@ -291,7 +251,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features section */}
       <section className="py-24 bg-gray-50">
         <div className="container-custom mx-auto px-6">
           <div className="text-center mb-16">
@@ -358,15 +318,15 @@ export default function Home() {
               Organize, automate, and manage voting
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              eVote makes it simple to set up and manage voting events
+              Pollix makes it simple to set up and manage voting events
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-16 items-center mt-20">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="bg-white p-6 rounded-2xl shadow-lg overflow-hidden border border-gray-100">
               <img
                 src="/feature-illustration.svg"
-                alt="eVote platform illustration"
+                alt="Pollix platform illustration"
                 className="w-full h-auto rounded-xl"
               />
             </div>
@@ -406,22 +366,13 @@ export default function Home() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2">
-                    Track results and analytics
+                    Track results in real-time
                   </h3>
                   <p className="text-gray-600">
-                    Monitor voting progress and generate detailed reports on
-                    results.
+                    Monitor votes, analyze patterns, and export detailed
+                    reports.
                   </p>
                 </div>
-              </div>
-
-              <div>
-                <Link href="/admin/register">
-                  <Button variant="gradient" size="lg">
-                    Start your first event
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>
@@ -437,7 +388,7 @@ export default function Home() {
         <div className="container-custom mx-auto px-6 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Boost your events with eVote today
+              Boost your events with Pollix today
             </h2>
             <p className="text-xl mb-10 text-white/80">
               Start for free with no credit card required
@@ -458,7 +409,7 @@ export default function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-gray-50">
         <div className="container-custom mx-auto px-6">
           <div className="text-center mb-16">
             <div className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium mb-2">
@@ -476,10 +427,10 @@ export default function Home() {
             <Accordion type="single" collapsible className="space-y-4">
               <AccordionItem value="item-1">
                 <AccordionTrigger>
-                  How do I get started with eVote?
+                  How do I get started with Pollix?
                 </AccordionTrigger>
                 <AccordionContent>
-                  Getting started with eVote is easy! Simply click on the
+                  Getting started with Pollix is easy! Simply click on the
                   &apos;Register&apos; button, create a department account, and
                   you&apos;ll be guided through setting up your first voting
                   event. You can add categories, nominees, and customize your
@@ -488,9 +439,9 @@ export default function Home() {
               </AccordionItem>
 
               <AccordionItem value="item-2">
-                <AccordionTrigger>Can I use eVote for free?</AccordionTrigger>
+                <AccordionTrigger>Can I use Pollix for free?</AccordionTrigger>
                 <AccordionContent>
-                  Yes! eVote offers a free tier that allows you to create and
+                  Yes! Pollix offers a free tier that allows you to create and
                   manage basic voting events. For more advanced features like
                   custom branding, API access, and premium support, we offer
                   affordable paid plans that scale with your needs.
@@ -512,10 +463,10 @@ export default function Home() {
 
               <AccordionItem value="item-4">
                 <AccordionTrigger>
-                  How does eVote handle payments?
+                  How does Pollix handle payments?
                 </AccordionTrigger>
                 <AccordionContent>
-                  eVote integrates with trusted payment processors to handle
+                  Pollix integrates with trusted payment processors to handle
                   vote purchases securely. Voters can pay using various methods
                   including credit cards and mobile money. As an admin,
                   you&apos;ll receive detailed reports of all transactions and
@@ -525,10 +476,10 @@ export default function Home() {
 
               <AccordionItem value="item-5">
                 <AccordionTrigger>
-                  Does eVote work for teams and individuals?
+                  Does Pollix work for teams and individuals?
                 </AccordionTrigger>
                 <AccordionContent>
-                  eVote is designed to be flexible! Whether you&apos;re
+                  Pollix is designed to be flexible! Whether you&apos;re
                   organizing a small classroom award or a large departmental
                   event with thousands of participants, our platform scales to
                   meet your needs. Multi-department support makes it perfect for
@@ -550,41 +501,47 @@ export default function Home() {
                 href="/"
                 className="text-2xl font-bold flex items-center mb-6"
               >
-                <span className="bg-white text-primary p-1 rounded mr-1">
-                  e
-                </span>
-                <span className="text-white">Vote</span>
+                <Image
+                  src="/Pollix icon.png"
+                  alt="Pollix"
+                  width={62}
+                  height={62}
+                  className="mr-2 rounded"
+                />
               </Link>
               <p className="text-white/70 mb-6">
                 A secure, real-time, feature-rich pay-to-vote platform for
                 school awards and events
               </p>
               <div className="flex space-x-4">
-                <a href="#" className="text-white/70 hover:text-white">
+                <a
+                  href="#"
+                  className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  <span className="sr-only">Twitter</span>
                   <svg
-                    className="h-6 w-6"
+                    className="w-5 h-5"
                     fill="currentColor"
-                    viewBox="0 0 24 24"
+                    viewBox="0 0 20 20"
                   >
-                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path>
+                    <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
                   </svg>
                 </a>
-                <a href="#" className="text-white/70 hover:text-white">
+                <a
+                  href="#"
+                  className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  <span className="sr-only">GitHub</span>
                   <svg
-                    className="h-6 w-6"
+                    className="w-5 h-5"
                     fill="currentColor"
-                    viewBox="0 0 24 24"
+                    viewBox="0 0 20 20"
                   >
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path>
-                  </svg>
-                </a>
-                <a href="#" className="text-white/70 hover:text-white">
-                  <svg
-                    className="h-6 w-6"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+                    <path
+                      fillRule="evenodd"
+                      d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </a>
               </div>
@@ -605,12 +562,12 @@ export default function Home() {
                 </li>
                 <li>
                   <a href="#" className="text-white/70 hover:text-white">
-                    Events
+                    API
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-white/70 hover:text-white">
-                    Testimonials
+                    Integrations
                   </a>
                 </li>
               </ul>
@@ -671,7 +628,8 @@ export default function Home() {
 
           <div className="border-t border-white/10 mt-12 pt-8 text-sm text-white/50">
             <p>
-              © {new Date().getFullYear()} eVote Platform. All rights reserved.
+              © {new Date().getFullYear()} Pollix Platform. All rights
+              reserved.
             </p>
           </div>
         </div>

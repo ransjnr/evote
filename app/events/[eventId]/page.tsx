@@ -428,8 +428,8 @@ export default function EventPage() {
             href="/"
             className="text-2xl font-bold text-primary flex items-center"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
+            <span className="bg-primary text-white p-1 rounded mr-1">P</span>
+            Pollix
           </Link>
           <nav className="hidden md:flex space-x-8">
             <Link

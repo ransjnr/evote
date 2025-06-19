@@ -248,8 +248,14 @@ export default function VerificationPendingPage() {
           href="/"
           className="flex items-center justify-center text-2xl font-bold mb-6"
         >
-          <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-          <span className="text-gray-800">Vote</span>
+          <img
+            src="/Pollix icon.png"
+            alt="Pollix"
+            width="32"
+            height="32"
+            className="mr-2 rounded"
+          />
+          <span className="text-gray-800">Pollix</span>
         </Link>
 
         <AnimatePresence mode="wait">
@@ -501,7 +507,8 @@ export default function VerificationPendingPage() {
                         <span className="font-medium">Congratulations!</span>
                         <br />
                         <span className="text-green-700">
-                          You now have full access to the eVote admin dashboard.
+                          You now have full access to the Pollix admin
+                          dashboard.
                         </span>
                       </p>
                     </div>

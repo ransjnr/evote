@@ -385,14 +385,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const mobileHeader = (
     <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
       <Link
-        href="/admin/dashboard"
-        className="text-xl font-bold text-primary flex items-center"
+        href="/"
+        className="text-2xl font-bold text-primary flex items-center lg:mb-8"
       >
-        <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-        Vote
-        <span className="ml-1 px-2 py-0.5 bg-indigo-100 text-xs text-primary rounded-full">
-          Admin
-        </span>
+        <img
+          src="/Pollix icon.png"
+          alt="Pollix"
+          width="32"
+          height="32"
+          className="mr-2 rounded"
+        />
+        Pollix
       </Link>
 
       <div className="flex items-center space-x-2">
@@ -422,14 +425,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="fixed inset-y-0 left-0 flex w-full max-w-xs flex-col bg-white shadow-xl">
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <Link
-            href="/admin/dashboard"
-            className="text-xl font-bold text-primary flex items-center"
+            href="/"
+            className="text-2xl font-bold text-primary flex items-center lg:mb-8"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
-            <span className="ml-1 px-2 py-0.5 bg-indigo-100 text-xs text-primary rounded-full">
-              Admin
-            </span>
+            <img
+              src="/Pollix icon.png"
+              alt="Pollix"
+              width="32"
+              height="32"
+              className="mr-2 rounded"
+            />
+            Pollix
           </Link>
           <button
             onClick={() => setIsMobileSidebarOpen(false)}
@@ -517,21 +523,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         )}
       >
         <Link
-          href="/admin/dashboard"
+          href="/"
           className={cn(
-            "text-xl font-bold text-primary flex items-center",
+            "text-2xl font-bold text-primary flex items-center",
             isSidebarCollapsed && "justify-center"
           )}
         >
-          <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-          {!isSidebarCollapsed && (
-            <>
-              Vote
-              <span className="ml-1 px-2 py-0.5 bg-indigo-100 text-xs text-primary rounded-full">
-                Admin
-              </span>
-            </>
-          )}
+          <img
+            src="/Pollix icon.png"
+            alt="Pollix"
+            width="32"
+            height="32"
+            className="mr-2 rounded"
+          />
+          {!isSidebarCollapsed && <>Pollix</>}
         </Link>
 
         {!isSidebarCollapsed && (

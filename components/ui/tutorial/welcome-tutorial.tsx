@@ -51,7 +51,7 @@ export const WelcomeTutorial: React.FC = () => {
   // Welcome screens content
   const welcomeScreens = [
     {
-      title: "Welcome to eVote Admin",
+      title: "Welcome to Pollix Admin",
       description:
         "We've created an interactive onboarding experience to help you get familiar with the platform.",
       image: "/tutorial/welcome.svg",

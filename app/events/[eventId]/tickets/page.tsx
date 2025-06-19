@@ -74,9 +74,16 @@ export default function PurchaseTickets() {
   // Get ticket types
   const ticketTypes = useQuery(api.tickets.getTicketTypes, { eventId }) || [];
 
+  // Get real-time available counts for each ticket type
+  const availableCounts = useQuery(
+    api.tickets.getAvailableTicketCount,
+    selectedTicketType ? { ticketTypeId: selectedTicketType._id } : "skip"
+  );
+
   // Purchase tickets mutation
   const purchaseTickets = useMutation(api.tickets.purchaseTickets);
   const confirmTicketPayment = useMutation(api.tickets.confirmTicketPayment);
+  const cancelTicketPayment = useMutation(api.tickets.cancelTicketPayment);
 
   const handleSelectTicket = (ticketType: any) => {
     setSelectedTicketType(ticketType);
@@ -119,7 +126,13 @@ export default function PurchaseTickets() {
   };
 
   const handlePaystackClose = () => {
+    // Cancel the pending payment when user closes Paystack
+    if (transactionId) {
+      cancelTicketPayment({ transactionId }).catch(console.error);
+    }
     toast.info("Payment cancelled");
+    setIsDialogOpen(false);
+    resetForm();
   };
 
   const handleInitiatePurchase = async () => {
@@ -132,8 +145,12 @@ export default function PurchaseTickets() {
       return;
     }
 
-    if (quantityNumeric > selectedTicketType.remaining) {
-      toast.error("Not enough tickets available");
+    // Check availability with real-time count
+    const realTimeAvailable = availableCounts ?? selectedTicketType.remaining;
+    if (quantityNumeric > realTimeAvailable) {
+      toast.error(
+        "Not enough tickets available. Please refresh and try again."
+      );
       return;
     }
 
@@ -231,8 +248,14 @@ export default function PurchaseTickets() {
             href="/"
             className="text-2xl font-bold text-primary flex items-center"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
+            <img
+              src="/Pollix icon.png"
+              alt="Pollix"
+              width="32"
+              height="32"
+              className="mr-2 rounded"
+            />
+            Pollix
           </Link>
           <nav className="hidden md:flex space-x-8">
             <Link
@@ -348,7 +371,9 @@ export default function PurchaseTickets() {
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {ticketTypes.map((ticketType) => {
-                    const isAvailable = ticketType.remaining > 0;
+                    // Use ticket type's remaining as fallback
+                    const availableCount = ticketType.remaining;
+                    const isAvailable = availableCount > 0;
                     const isOnSale =
                       (!ticketType.saleStartDate ||
                         Date.now() >= ticketType.saleStartDate) &&
@@ -369,15 +394,11 @@ export default function PurchaseTickets() {
                             <CardTitle className="text-xl">
                               {ticketType.name}
                             </CardTitle>
-                            {ticketType.remaining < 10 &&
-                              ticketType.remaining > 0 && (
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs"
-                                >
-                                  Only {ticketType.remaining} left
-                                </Badge>
-                              )}
+                            {availableCount < 10 && availableCount > 0 && (
+                              <Badge variant="destructive" className="text-xs">
+                                Only {availableCount} left
+                              </Badge>
+                            )}
                           </div>
                           {ticketType.description && (
                             <CardDescription className="text-sm">
@@ -421,7 +442,7 @@ export default function PurchaseTickets() {
                             <div className="flex justify-between">
                               <span>Available:</span>
                               <span className="font-medium">
-                                {ticketType.remaining}
+                                {availableCount}
                               </span>
                             </div>
                             <div className="flex justify-between">
@@ -487,7 +508,8 @@ export default function PurchaseTickets() {
                             </p>
                           </div>
                           <Badge>
-                            {selectedTicketType.remaining} available
+                            {availableCounts ?? selectedTicketType.remaining}{" "}
+                            available
                           </Badge>
                         </div>
                       </CardContent>
@@ -501,7 +523,10 @@ export default function PurchaseTickets() {
                           id="quantity"
                           type="number"
                           min="1"
-                          max={Math.min(selectedTicketType.remaining, 10)}
+                          max={Math.min(
+                            availableCounts ?? selectedTicketType.remaining,
+                            10
+                          )}
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
                           required
@@ -612,7 +637,8 @@ export default function PurchaseTickets() {
                       {totalPrice > 0 && transactionId && (
                         <PaystackButton
                           email={purchaserEmail}
-                          amount={totalPrice * 100} // Paystack expects amount in kobo
+                          amount={totalPrice * 100} // Paystack expects amount in pesewas (kobo equivalent for GHS)
+                          currency="GHS"
                           publicKey={
                             process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ""
                           }

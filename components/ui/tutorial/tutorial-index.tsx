@@ -61,7 +61,7 @@ export const TutorialIndex: React.FC = () => {
       </div>
 
       <p className="text-gray-600 mb-8 max-w-3xl">
-        Welcome to the eVote tutorial library. Here you'll find interactive
+        Welcome to the Pollix tutorial library. Here you'll find interactive
         guides to help you learn how to use all features of the platform. Click
         on any tutorial to get started.
       </p>

@@ -64,7 +64,8 @@ export default function AdminRegister() {
 
   // State for the verification waiting modal
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [registeredAdminId, setRegisteredAdminId] = useState<Id<"admins"> | null>(null);
+  const [registeredAdminId, setRegisteredAdminId] =
+    useState<Id<"admins"> | null>(null);
   const [dots, setDots] = useState("");
   const [statusMessage, setStatusMessage] = useState(
     "Processing registration..."
@@ -346,15 +347,17 @@ export default function AdminRegister() {
           onMouseEnter={() => setELogoHover(true)}
           onMouseLeave={() => setELogoHover(false)}
         >
-          <span
-            className={`${eLogoHover ? "bg-indigo-600" : "bg-primary"} text-white p-1 rounded mr-1 transition-all duration-300 ease-in-out transform ${eLogoHover ? "scale-110" : "scale-100"}`}
-          >
-            e
-          </span>
+          <img
+            src="/Pollix icon.png"
+            alt="Pollix"
+            width="32"
+            height="32"
+            className={`mr-2 rounded transition-all duration-300 ease-in-out transform ${eLogoHover ? "scale-110" : "scale-100"}`}
+          />
           <span
             className={`transition-colors duration-300 ${eLogoHover ? "text-indigo-700" : "text-gray-800"}`}
           >
-            Vote
+            Pollix
           </span>
         </Link>
       </div>
@@ -804,7 +807,7 @@ export default function AdminRegister() {
                   {departmentSlug && (
                     <p className="text-xs text-gray-600 mt-1 flex items-center">
                       <Check className="h-3 w-3 mr-1 text-primary" />
-                      Your URL: evote.com/
+                      Your URL: pollix.com/
                       <span className="font-medium">{departmentSlug}</span>
                     </p>
                   )}
@@ -870,7 +873,7 @@ export default function AdminRegister() {
       </div>
 
       <div className="absolute bottom-4 text-center w-full text-gray-500 text-sm">
-        &copy; {new Date().getFullYear()} eVote Platform. All rights reserved.
+        &copy; {new Date().getFullYear()} Pollix Platform. All rights reserved.
       </div>
 
       {/* CSS Animations */}

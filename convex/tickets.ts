@@ -2,12 +2,14 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
-// Helper function to generate ticket code (since we can't import from lib in Convex)
+// Helper function to generate 16-digit ticket code
 const generateTicketCode = () => {
-  const prefix = "TKT";
-  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase(); // Random 6 chars
-  return `${prefix}-${timestamp}-${random}`;
+  // Generate a 16-digit numeric code
+  let code = "";
+  for (let i = 0; i < 16; i++) {
+    code += Math.floor(Math.random() * 10).toString();
+  }
+  return code;
 };
 
 // Create a new ticket type for an event
@@ -213,7 +215,7 @@ export const purchaseTickets = mutation({
     // Calculate total amount
     const totalAmount = ticketType.price * args.quantity;
 
-    // Create tickets
+    // Create tickets with PENDING status - do NOT reduce remaining count yet
     const ticketPromises = Array.from({ length: args.quantity }).map(
       async () => {
         const ticketCode = generateTicketCode();
@@ -235,10 +237,8 @@ export const purchaseTickets = mutation({
 
     const ticketIds = await Promise.all(ticketPromises);
 
-    // Update remaining tickets
-    await ctx.db.patch(args.ticketTypeId, {
-      remaining: ticketType.remaining - args.quantity,
-    });
+    // DO NOT update remaining tickets here - wait for payment confirmation
+    // This prevents overselling when users abandon payments
 
     // Create payment record
     await ctx.db.insert("payments", {
@@ -262,7 +262,7 @@ export const confirmTicketPayment = mutation({
     transactionId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Update payment status
+    // Get payment details
     const payment = await ctx.db
       .query("payments")
       .withIndex("by_transaction", (q) =>
@@ -278,12 +278,7 @@ export const confirmTicketPayment = mutation({
       throw new ConvexError("Payment already processed");
     }
 
-    // Update payment status
-    await ctx.db.patch(payment._id, {
-      status: "succeeded",
-    });
-
-    // Update ticket statuses
+    // Get tickets for this transaction
     const tickets = await ctx.db
       .query("tickets")
       .withIndex("by_transaction", (q) =>
@@ -291,10 +286,69 @@ export const confirmTicketPayment = mutation({
       )
       .collect();
 
+    if (tickets.length === 0) {
+      throw new ConvexError("No tickets found for this transaction");
+    }
+
+    // Get ticket type to update remaining count
+    const ticketType = await ctx.db.get(tickets[0].ticketTypeId);
+    if (!ticketType) {
+      throw new ConvexError("Ticket type not found");
+    }
+
+    // Double-check availability before confirming (prevent race conditions)
+    if (ticketType.remaining < tickets.length) {
+      throw new ConvexError(
+        "Not enough tickets available to complete this purchase"
+      );
+    }
+
+    // Update payment status to succeeded
+    await ctx.db.patch(payment._id, {
+      status: "succeeded",
+    });
+
+    // Update ticket statuses to confirmed
     for (const ticket of tickets) {
       await ctx.db.patch(ticket._id, {
         status: "confirmed",
       });
+    }
+
+    // NOW reduce the remaining ticket count (only after successful payment)
+    await ctx.db.patch(tickets[0].ticketTypeId, {
+      remaining: ticketType.remaining - tickets.length,
+    });
+
+    // Get event details for email
+    const event = await ctx.db.get(payment.eventId);
+
+    if (event && tickets.length > 0) {
+      // Send confirmation email
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/tickets/send-confirmation`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              tickets,
+              event,
+              purchaserEmail: tickets[0].purchaserEmail,
+              transactionId: args.transactionId,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Failed to send confirmation email");
+        }
+      } catch (error) {
+        console.error("Error sending confirmation email:", error);
+        // Don't throw error - payment is already successful
+      }
     }
 
     return { success: true };
@@ -412,5 +466,191 @@ export const getTicketsByTransaction = query({
       .collect();
 
     return tickets;
+  },
+});
+
+// Cancel pending ticket payment and clean up tickets
+export const cancelTicketPayment = mutation({
+  args: {
+    transactionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get payment details
+    const payment = await ctx.db
+      .query("payments")
+      .withIndex("by_transaction", (q) =>
+        q.eq("transactionId", args.transactionId)
+      )
+      .first();
+
+    if (!payment) {
+      throw new ConvexError("Payment not found");
+    }
+
+    if (payment.status !== "pending") {
+      throw new ConvexError("Payment is not in pending status");
+    }
+
+    // Get tickets for this transaction
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_transaction", (q) =>
+        q.eq("transactionId", args.transactionId)
+      )
+      .collect();
+
+    // Update payment status to failed
+    await ctx.db.patch(payment._id, {
+      status: "failed",
+    });
+
+    // Delete pending tickets (they were never confirmed)
+    for (const ticket of tickets) {
+      await ctx.db.delete(ticket._id);
+    }
+
+    return { success: true, cancelledTickets: tickets.length };
+  },
+});
+
+// Clean up expired pending payments (older than 30 minutes)
+export const cleanupExpiredPendingPayments = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000; // 30 minutes ago
+
+    // Get all pending payments older than 30 minutes
+    const expiredPayments = await ctx.db
+      .query("payments")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.eq(q.field("paymentType"), "ticket"),
+          q.lt(q.field("createdAt"), thirtyMinutesAgo)
+        )
+      )
+      .collect();
+
+    let cleanedCount = 0;
+
+    for (const payment of expiredPayments) {
+      // Get tickets for this payment
+      const tickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_transaction", (q) =>
+          q.eq("transactionId", payment.transactionId)
+        )
+        .collect();
+
+      // Update payment status to failed
+      await ctx.db.patch(payment._id, {
+        status: "failed",
+      });
+
+      // Delete the pending tickets
+      for (const ticket of tickets) {
+        await ctx.db.delete(ticket._id);
+      }
+
+      cleanedCount += tickets.length;
+    }
+
+    return {
+      success: true,
+      expiredPayments: expiredPayments.length,
+      cleanedTickets: cleanedCount,
+    };
+  },
+});
+
+// Get available ticket count (excluding pending tickets older than 10 minutes)
+export const getAvailableTicketCount = query({
+  args: {
+    ticketTypeId: v.id("ticketTypes"),
+  },
+  handler: async (ctx, args) => {
+    const ticketType = await ctx.db.get(args.ticketTypeId);
+    if (!ticketType) {
+      return 0;
+    }
+
+    // Count recent pending tickets (last 10 minutes) that might still be valid
+    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+    const recentPendingTickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_ticket_type", (q) =>
+        q.eq("ticketTypeId", args.ticketTypeId)
+      )
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.gt(q.field("createdAt"), tenMinutesAgo)
+        )
+      )
+      .collect();
+
+    // Available = remaining - recent pending tickets
+    return Math.max(0, ticketType.remaining - recentPendingTickets.length);
+  },
+});
+
+// Admin function to manually trigger cleanup (can be called from admin dashboard)
+export const adminCleanupExpiredPayments = mutation({
+  args: {
+    adminId: v.id("admins"), // Require admin authentication
+  },
+  handler: async (ctx, args) => {
+    // Verify admin exists (basic auth check)
+    const admin = await ctx.db.get(args.adminId);
+    if (!admin) {
+      throw new ConvexError("Admin not found");
+    }
+
+    // Duplicate cleanup logic here since we can't call mutations from mutations
+    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000; // 30 minutes ago
+
+    // Get all pending payments older than 30 minutes
+    const expiredPayments = await ctx.db
+      .query("payments")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.eq(q.field("paymentType"), "ticket"),
+          q.lt(q.field("createdAt"), thirtyMinutesAgo)
+        )
+      )
+      .collect();
+
+    let cleanedCount = 0;
+
+    for (const payment of expiredPayments) {
+      // Get tickets for this payment
+      const tickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_transaction", (q) =>
+          q.eq("transactionId", payment.transactionId)
+        )
+        .collect();
+
+      // Update payment status to failed
+      await ctx.db.patch(payment._id, {
+        status: "failed",
+      });
+
+      // Delete the pending tickets
+      for (const ticket of tickets) {
+        await ctx.db.delete(ticket._id);
+      }
+
+      cleanedCount += tickets.length;
+    }
+
+    return {
+      success: true,
+      expiredPayments: expiredPayments.length,
+      cleanedTickets: cleanedCount,
+      triggeredBy: admin.email,
+      triggeredAt: Date.now(),
+    };
   },
 });

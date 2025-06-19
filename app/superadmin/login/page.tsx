@@ -118,21 +118,21 @@ export default function SuperAdminLogin() {
           onMouseEnter={() => setELogoHover(true)}
           onMouseLeave={() => setELogoHover(false)}
         >
-          <span
-            className={`${
-              eLogoHover ? "bg-indigo-600" : "bg-primary"
-            } text-white p-1 rounded mr-1 transition-all duration-300 ease-in-out transform ${
+          <img
+            src="/Pollix icon.png"
+            alt="Pollix"
+            width="32"
+            height="32"
+            className={`mr-2 rounded transition-all duration-300 ease-in-out transform ${
               eLogoHover ? "scale-110" : "scale-100"
             }`}
-          >
-            e
-          </span>
+          />
           <span
             className={`transition-colors duration-300 ${
               eLogoHover ? "text-indigo-700" : "text-gray-800"
             }`}
           >
-            Vote
+            Pollix
           </span>
           <span className="text-xs ml-2 bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
             Super Admin

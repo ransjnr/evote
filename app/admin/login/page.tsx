@@ -154,15 +154,17 @@ export default function AdminLogin() {
           onMouseEnter={() => setELogoHover(true)}
           onMouseLeave={() => setELogoHover(false)}
         >
-          <span
-            className={`${eLogoHover ? "bg-indigo-600" : "bg-primary"} text-white p-1 rounded mr-1 transition-all duration-300 ease-in-out transform ${eLogoHover ? "scale-110" : "scale-100"}`}
-          >
-            e
-          </span>
+          <img
+            src="/Pollix icon.png"
+            alt="Pollix"
+            width="32"
+            height="32"
+            className={`mr-2 rounded transition-all duration-300 ease-in-out transform ${eLogoHover ? "scale-110" : "scale-100"}`}
+          />
           <span
             className={`transition-colors duration-300 ${eLogoHover ? "text-indigo-700" : "text-gray-800"}`}
           >
-            Vote
+            Pollix
           </span>
         </Link>
       </div>
@@ -355,7 +357,7 @@ export default function AdminLogin() {
       </div>
 
       <div className="absolute bottom-4 text-center w-full text-gray-500 text-sm">
-        &copy; {new Date().getFullYear()} eVote Platform. All rights reserved.
+        &copy; {new Date().getFullYear()} Pollix Platform. All rights reserved.
       </div>
 
       {/* CSS Animations */}

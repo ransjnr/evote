@@ -46,8 +46,14 @@ export default function RegistrationSuccess() {
           href="/"
           className="text-2xl font-bold flex items-center transition-all duration-300"
         >
-          <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-          <span className="text-gray-800">Vote</span>
+          <img
+            src="/Pollix icon.png"
+            alt="Pollix"
+            width="32"
+            height="32"
+            className="mr-2 rounded"
+          />
+          <span className="text-gray-800">Pollix</span>
         </Link>
       </div>
 

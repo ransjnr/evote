@@ -12,9 +12,9 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "eVote - Secure Pay-to-Vote Platform",
+  title: "Pollix - Secure Pay-to-Vote Platform",
   description:
-    "A secure, real-time, feature-rich pay-to-vote eVoting platform for school awards and events",
+    "A secure, real-time, feature-rich pay-to-vote platform for school awards and events",
 };
 
 export default function RootLayout({

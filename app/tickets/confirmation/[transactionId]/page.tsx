@@ -19,15 +19,18 @@ import { Separator } from "@/components/ui/separator";
 import {
   Calendar,
   MapPin,
-  Users,
-  Clock,
   CheckCircle,
   Loader2,
   ArrowRight,
-  Menu,
+  QrCode,
+  Download,
+  Share2,
+  Mail,
+  Copy,
 } from "lucide-react";
 import { Footer } from "@/components/ui/footer";
 import Link from "next/link";
+import QRCode from 'qrcode';
 
 export default function TicketConfirmation() {
   const params = useParams();
@@ -36,6 +39,8 @@ export default function TicketConfirmation() {
   const [isProcessing, setIsProcessing] = useState(true);
   const [processingInterval, setProcessingInterval] =
     useState<NodeJS.Timeout | null>(null);
+  const [qrCodes, setQrCodes] = useState<{ [key: string]: string }>({});
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   // Get payment details
   const payment = useQuery(api.payments.getPaymentByTransaction, {
@@ -60,6 +65,45 @@ export default function TicketConfirmation() {
 
   // Confirm payment mutation
   const confirmPayment = useMutation(api.tickets.confirmTicketPayment);
+
+  // Generate QR codes for all tickets
+  useEffect(() => {
+    if (tickets.length > 0 && event && Object.keys(qrCodes).length === 0) {
+      setIsGeneratingQR(true);
+      const generateQRCodes = async () => {
+        const qrCodeMap: { [key: string]: string } = {};
+        
+        for (const ticket of tickets) {
+          const qrData = JSON.stringify({
+            ticketCode: ticket.ticketCode,
+            eventId: event._id,
+            eventName: event.name,
+            purchaserName: ticket.purchaserName,
+            timestamp: Date.now(),
+          });
+
+          try {
+            const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+              width: 200,
+              margin: 2,
+              color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+              }
+            });
+            qrCodeMap[ticket._id] = qrCodeDataURL;
+          } catch (error) {
+            console.error('Error generating QR code:', error);
+          }
+        }
+        
+        setQrCodes(qrCodeMap);
+        setIsGeneratingQR(false);
+      };
+
+      generateQRCodes();
+    }
+  }, [tickets, event, qrCodes]);
 
   useEffect(() => {
     // Simulate payment processing
@@ -92,6 +136,44 @@ export default function TicketConfirmation() {
     };
   }, [payment, confirmPayment, transactionId]);
 
+  const handleCopyTicketCode = (ticketCode: string) => {
+    navigator.clipboard.writeText(ticketCode);
+    toast.success("Ticket code copied to clipboard!");
+  };
+
+  const handleDownloadQR = (ticketId: string, ticketCode: string) => {
+    const qrDataURL = qrCodes[ticketId];
+    if (qrDataURL) {
+      const link = document.createElement('a');
+      link.href = qrDataURL;
+      link.download = `ticket-${ticketCode}-qr.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("QR code downloaded!");
+    }
+  };
+
+  const handleShareTicket = async (ticket: any) => {
+    const shareData = {
+      title: `Ticket for ${event?.name}`,
+      text: `I have a ticket for ${event?.name}! Ticket Code: ${ticket.ticketCode}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback to copying link
+      navigator.clipboard.writeText(shareData.url);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   if (!payment || !event || !ticketType) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -114,8 +196,14 @@ export default function TicketConfirmation() {
             href="/"
             className="text-2xl font-bold text-primary flex items-center"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
+            <img
+              src="/Pollix icon.png"
+              alt="Pollix"
+              width="32"
+              height="32"
+              className="mr-2 rounded"
+            />
+            Pollix
           </Link>
           <nav className="hidden md:flex space-x-8">
             <Link
@@ -170,165 +258,273 @@ export default function TicketConfirmation() {
       <main className="flex-1">
         <div className="container mx-auto py-8 px-4">
           <div className="max-w-4xl mx-auto space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Ticket Purchase Confirmation</span>
-              <Badge
-                variant={payment.status === "succeeded" ? "success" : "warning"}
-              >
-                {payment.status === "succeeded" ? "Confirmed" : "Processing"}
-              </Badge>
-            </CardTitle>
-            <CardDescription>Transaction ID: {transactionId}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {isProcessing ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Processing Payment
-                </h3>
-                <p className="text-gray-500 text-center">
-                  Please wait while we process your payment. This may take a few
-                  moments.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Event Details</h3>
-                  <div className="space-y-2">
-                    <p className="text-xl font-bold">{event.name}</p>
-                    {event.description && (
-                      <p className="text-gray-600">{event.description}</p>
-                    )}
-                    <div className="flex flex-wrap gap-4 mt-2">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-gray-500" />
-                        <span>
-                          {new Date(event.startDate).toLocaleDateString()} -{" "}
-                          {new Date(event.endDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {event.venue && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-5 h-5 text-gray-500" />
-                          <span>{event.venue}</span>
-                        </div>
-                      )}
-                    </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>🎫 Ticket Purchase Confirmation</span>
+                  <Badge
+                    variant={payment.status === "succeeded" ? "default" : "secondary"}
+                    className={payment.status === "succeeded" ? "bg-green-100 text-green-800" : ""}
+                  >
+                    {payment.status === "succeeded" ? "✅ Confirmed" : "⏳ Processing"}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>Transaction ID: {transactionId}</CardDescription>
+              </CardHeader>
+              
+              <CardContent className="space-y-6">
+                {isProcessing ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      Processing Payment
+                    </h3>
+                    <p className="text-gray-500 text-center">
+                      Please wait while we process your payment. This may take a few
+                      moments.
+                    </p>
                   </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Ticket Details</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-baseline">
+                ) : (
+                  <>
+                    {/* Success Message */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
                       <div>
-                        <p className="font-medium">{ticketType.name}</p>
-                        {ticketType.description && (
-                          <p className="text-sm text-gray-500">
-                            {ticketType.description}
+                        <h3 className="font-semibold text-green-800">Payment Successful!</h3>
+                        <p className="text-green-700 text-sm">
+                          Your tickets have been confirmed and a confirmation email has been sent to {tickets[0]?.purchaserEmail}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Event Details */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Event Details</h3>
+                      <div className="space-y-2">
+                        <p className="text-xl font-bold">{event.name}</p>
+                        {event.description && (
+                          <p className="text-gray-600">{event.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-4 mt-2">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-gray-500" />
+                            <span>
+                              {new Date(event.startDate).toLocaleDateString()} -{" "}
+                              {new Date(event.endDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {event.venue && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-5 h-5 text-gray-500" />
+                              <span>{event.venue}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Ticket Details */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Ticket Details</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-baseline">
+                          <div>
+                            <p className="font-medium">{ticketType.name}</p>
+                            {ticketType.description && (
+                              <p className="text-sm text-gray-500">
+                                {ticketType.description}
+                              </p>
+                            )}
+                          </div>
+                          <p className="text-lg font-semibold">
+                            ₵{ticketType.price.toFixed(2)} × {tickets.length}
                           </p>
+                        </div>
+
+                        {ticketType.benefits && ticketType.benefits.length > 0 && (
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <p className="font-medium mb-2">Included Benefits:</p>
+                            <ul className="space-y-1">
+                              {ticketType.benefits.map(
+                                (benefit: string, index: number) => (
+                                  <li
+                                    key={index}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <span>{benefit}</span>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
                         )}
                       </div>
-                      <p className="text-lg font-semibold">
-                        ₵{ticketType.price.toFixed(2)} × {tickets.length}
-                      </p>
                     </div>
 
-                    {ticketType.benefits && ticketType.benefits.length > 0 && (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="font-medium mb-2">Included Benefits:</p>
-                        <ul className="space-y-1">
-                          {ticketType.benefits.map(
-                            (benefit: string, index: number) => (
-                              <li
-                                key={index}
-                                className="flex items-center gap-2"
-                              >
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>{benefit}</span>
-                              </li>
-                            )
-                          )}
-                        </ul>
+                    <Separator />
+
+                    {/* Your Tickets with QR Codes */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Your Tickets</h3>
+                      <div className="space-y-4">
+                        {tickets.map((ticket) => (
+                          <Card key={ticket._id} className="border-2 border-primary/20">
+                            <CardContent className="pt-6">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                                {/* Ticket Info */}
+                                <div className="md:col-span-2">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                      <p className="font-medium text-lg">
+                                        {ticket.purchaserName}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {ticket.purchaserEmail}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {ticket.purchaserPhone}
+                                      </p>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        ticket.status === "confirmed"
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className={ticket.status === "confirmed" ? "bg-green-100 text-green-800" : ""}
+                                    >
+                                      {ticket.status === "confirmed" ? "✅ Confirmed" : ticket.status}
+                                    </Badge>
+                                  </div>
+                                  
+                                  {/* Ticket Code */}
+                                  <div className="bg-primary/5 p-3 rounded-lg border border-primary/20">
+                                    <p className="text-sm text-gray-600 mb-1">Ticket Code</p>
+                                    <div className="flex items-center justify-between">
+                                      <code className="text-lg font-mono font-bold text-primary">
+                                        {ticket.ticketCode}
+                                      </code>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleCopyTicketCode(ticket.ticketCode)}
+                                      >
+                                        <Copy className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  {/* Action Buttons */}
+                                  <div className="flex flex-wrap gap-2 mt-4">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDownloadQR(ticket._id, ticket.ticketCode)}
+                                      disabled={!qrCodes[ticket._id]}
+                                    >
+                                      <Download className="w-4 h-4 mr-2" />
+                                      Download QR
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleShareTicket(ticket)}
+                                    >
+                                      <Share2 className="w-4 h-4 mr-2" />
+                                      Share
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* QR Code */}
+                                <div className="text-center">
+                                  {isGeneratingQR ? (
+                                    <div className="flex flex-col items-center">
+                                      <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                                      <p className="text-sm text-gray-500">Generating QR...</p>
+                                    </div>
+                                  ) : qrCodes[ticket._id] ? (
+                                    <div>
+                                      <img 
+                                        src={qrCodes[ticket._id]} 
+                                        alt="Ticket QR Code" 
+                                        className="w-32 h-32 mx-auto border rounded-lg"
+                                      />
+                                      <p className="text-xs text-gray-500 mt-2">
+                                        <QrCode className="w-3 h-3 inline mr-1" />
+                                        Scan to verify
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center mx-auto">
+                                      <QrCode className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                <Separator />
+                    <Separator />
 
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Your Tickets</h3>
-                  <div className="space-y-4">
-                    {tickets.map((ticket) => (
-                      <Card key={ticket._id}>
-                        <CardContent className="pt-6">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">
-                                {ticket.purchaserName}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {ticket.purchaserEmail}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {ticket.purchaserPhone}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <Badge variant="outline" className="mb-2">
-                                Ticket Code: {ticket.ticketCode}
-                              </Badge>
-                              <Badge
-                                variant={
-                                  ticket.status === "confirmed"
-                                    ? "success"
-                                    : "warning"
-                                }
-                              >
-                                {ticket.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                    {/* Total Amount */}
+                    <div className="bg-primary/5 p-4 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-lg">Total Amount Paid</span>
+                        <span className="text-2xl font-bold text-primary">
+                          ₵{payment.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+              
+              <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/events/${event._id}`)}
+                  className="w-full sm:w-auto"
+                >
+                  Back to Event
+                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  {payment.status === "succeeded" && (
+                    <>
+                      <Button 
+                        onClick={() => window.print()}
+                        className="flex-1 sm:flex-none"
+                      >
+                        Print Tickets
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const mailtoLink = `mailto:${tickets[0]?.purchaserEmail}?subject=Your tickets for ${event.name}&body=Your tickets have been confirmed! Transaction ID: ${transactionId}`;
+                          window.location.href = mailtoLink;
+                        }}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                      </Button>
+                    </>
+                  )}
                 </div>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+      </main>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total Amount</span>
-                    <span className="text-2xl font-bold">
-                      ₵{payment.amount.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-end space-x-4">
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/events/${event._id}`)}
-            >
-              Back to Event
-            </Button>
-            {payment.status === "succeeded" && (
-              <Button onClick={() => window.print()}>Print Tickets</Button>
-            )}
-          </CardFooter>
-        </Card>
-      </div>
+      {/* Footer */}
+      <Footer />
     </div>
-  </main>
-
-  {/* Footer */}
-  <Footer />
-</div>
+  );
+}

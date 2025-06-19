@@ -2,49 +2,271 @@
 
 This document provides a comprehensive guide on the e-ticketing system integrated into the eVote application.
 
-## Overview
+## 📱 E-Ticketing System
 
-The e-ticketing system allows event organizers to sell tickets for their events and track payments. Users can purchase tickets using Paystack payment integration, and admins can monitor all ticket sales and payments through the admin dashboard.
+A comprehensive ticketing solution integrated with the eVote platform, allowing event organizers to sell tickets and manage attendees alongside voting functionality.
 
-## Features
+### ✨ Features
 
-### For Users
-- Browse events with ticketing enabled
-- View different ticket types with pricing and benefits
-- Purchase tickets with secure Paystack payment processing
-- Receive confirmation emails with ticket details and QR codes
-- View ticket confirmation page with all purchase details
+#### 🎫 Ticket Management
+- **Multiple Ticket Types**: Create various ticket tiers (VIP, Regular, Early Bird, etc.)
+- **Pricing Control**: Set individual prices for each ticket type
+- **Inventory Management**: Smart availability tracking with automatic cleanup
+- **Benefits System**: Highlight what each ticket includes
+- **Sale Periods**: Optional start/end dates for ticket sales
 
-### For Admins
-- Create and manage ticket types for events
-- Set pricing, quantity, and sale periods for tickets
-- View comprehensive payment analytics (both votes and tickets)
-- Track ticket sales in real-time
-- Monitor payment statuses and transaction details
-- Validate tickets using QR codes
+#### 💳 Secure Payment Processing
+- **Paystack Integration**: Reliable payment processing
+- **16-Digit Ticket Codes**: Unique identification for each ticket
+- **Email Confirmations**: Professional confirmation emails with QR codes
+- **Payment Protection**: Tickets only confirmed after successful payment
+- **Automatic Cleanup**: Expired pending payments cleaned automatically
+
+#### 📧 Email System
+- **Instant Confirmations**: Immediate email after successful payment
+- **QR Code Generation**: Embedded QR codes for easy verification
+- **Professional Templates**: Beautiful, responsive email design
+- **Event Details**: Complete event information in emails
+
+#### 🎯 Real-Time Availability
+- **Live Updates**: Real-time ticket availability
+- **Pending Protection**: Accounts for recent pending purchases
+- **Overselling Prevention**: Smart inventory management
+- **Race Condition Prevention**: Secure concurrent purchase handling
+
+#### 📊 Admin Features
+- **Sales Analytics**: Comprehensive ticket sales data
+- **Revenue Tracking**: Separate tracking for votes vs tickets
+- **Inventory Control**: Manage quantities and pricing
+- **Manual Cleanup**: Admin tools for payment cleanup
+- **Transaction History**: Complete payment audit trail
+
+### 🚀 Getting Started
+
+#### Prerequisites
+- Node.js 18+ and npm/yarn
+- Convex account and project
+- Paystack account
+- Email service (Gmail or custom SMTP)
+
+#### Installation
+1. **Install Dependencies**
+   ```bash
+   npm install react-paystack qrcode nodemailer
+   npm install --save-dev @types/qrcode @types/nodemailer
+   ```
+
+2. **Environment Variables**
+   ```bash
+   # Add to .env.local
+   NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_...
+   PAYSTACK_SECRET_KEY=sk_test_...
+   
+   # Email configuration (see README-TICKET-EMAIL-SETUP.md)
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-app-password
+   ```
+
+3. **Database Schema**
+   The ticket system uses these Convex tables:
+   - `ticketTypes`: Ticket type definitions
+   - `tickets`: Individual purchased tickets
+   - `payments`: Payment records (enhanced for tickets)
+
+### 💡 How It Works
+
+#### Payment Flow
+```
+1. User selects tickets → Creates pending tickets (no quantity reduction)
+2. User pays via Paystack → Payment confirmed by webhook
+3. System confirms payment → Reduces available quantity
+4. Sends confirmation email → User receives QR codes
+5. Cleanup expired pending → Maintains accurate availability
+```
+
+#### Inventory Management
+- **Smart Availability**: Shows real tickets available minus recent pending
+- **10-Minute Buffer**: Recent pending tickets (last 10 min) count as "reserved"
+- **30-Minute Cleanup**: Expired pending payments auto-cleaned
+- **Manual Cleanup**: Admin can trigger cleanup anytime
+
+#### Email Workflow
+1. **Purchase Initiation**: Tickets created in pending state
+2. **Payment Success**: Triggers confirmation mutation
+3. **Email Generation**: Creates QR codes and email content
+4. **Email Delivery**: Sends via configured email service
+5. **User Experience**: Download, share, and copy ticket codes
+
+### 🎨 User Experience
+
+#### Ticket Discovery
+- **Beautiful Landing Page**: `/etickets` with event showcase
+- **Advanced Filtering**: Search, status, and event type filters
+- **Event Cards**: Modern design with status indicators
+- **Direct Purchase**: One-click access to ticket buying
+
+#### Purchase Experience
+- **Two-Step Process**: Select tickets → Complete payment
+- **Real-Time Validation**: Live availability checking
+- **Multiple Quantities**: Buy multiple tickets at once
+- **Guest Information**: Collect attendee details
+- **Payment Security**: Secure Paystack integration
+
+#### Confirmation & Management
+- **Instant Confirmation**: Immediate confirmation page
+- **QR Code Access**: Download and share QR codes
+- **Ticket Codes**: 16-digit codes for manual entry
+- **Email Backup**: Professional email confirmation
+
+### 🔧 Admin Management
+
+#### Event Setup
+1. Create event with `ticketing_enabled` or `both` type
+2. Set up ticket types with pricing and quantities
+3. Configure sale periods (optional)
+4. Monitor sales in real-time
+
+#### Sales Monitoring
+- **Dashboard Analytics**: Revenue, transaction counts
+- **Payment Breakdown**: Separate vote vs ticket revenue
+- **Real-Time Updates**: Live sales data
+- **Export Capabilities**: Transaction history
+
+#### Maintenance
+- **Expired Cleanup**: Manual cleanup of expired payments
+- **Inventory Adjustment**: Modify quantities as needed
+- **Price Updates**: Change pricing before sales
+- **Sale Period Control**: Manage when tickets are available
+
+### 🛡️ Security Features
+
+#### Payment Security
+- **Transaction Validation**: Verify payments with Paystack
+- **Duplicate Prevention**: Unique transaction IDs
+- **Race Condition Handling**: Secure concurrent operations
+- **Payment Webhooks**: Reliable payment confirmation
+
+#### Ticket Security
+- **Unique Codes**: 16-digit ticket identification
+- **QR Code Verification**: Tamper-resistant QR codes
+- **Status Tracking**: Complete ticket lifecycle
+- **Audit Trail**: Full transaction history
+
+#### Data Protection
+- **Secure Storage**: Convex database encryption
+- **Input Validation**: Comprehensive form validation
+- **Error Handling**: Graceful error management
+- **Privacy Compliance**: Secure data handling
+
+### 📊 Analytics & Reporting
+
+#### Revenue Insights
+- **Total Revenue**: Combined vote + ticket revenue
+- **Revenue Breakdown**: Separate tracking by type
+- **Transaction Metrics**: Success rates and patterns
+- **Event Performance**: Per-event analytics
+
+#### Inventory Analytics
+- **Availability Tracking**: Real-time stock levels
+- **Sales Velocity**: Ticket sales rate
+- **Pending Analysis**: Payment completion rates
+- **Cleanup Statistics**: Expired payment data
+
+### 🔮 Advanced Features
+
+#### Customization Options
+- **Email Templates**: Customize confirmation emails
+- **Ticket Benefits**: Highlight ticket perks
+- **Pricing Strategies**: Flexible pricing models
+- **Sale Periods**: Time-limited sales
+
+#### Integration Capabilities
+- **Webhook Support**: Payment status webhooks
+- **API Access**: Convex API for custom integrations
+- **Export Functions**: Data export capabilities
+- **Third-Party Tools**: Integration with external services
+
+### 📞 Support & Troubleshooting
+
+#### Common Issues
+- **Payment Failures**: Check Paystack configuration
+- **Email Delivery**: Verify SMTP settings
+- **Availability Issues**: Run cleanup for accurate counts
+- **QR Code Problems**: Ensure proper image generation
+
+#### Debugging Tools
+- **Admin Cleanup**: Manual expired payment cleanup
+- **Payment Logs**: Transaction history review
+- **Email Testing**: Send test confirmations
+- **Availability Check**: Real-time inventory verification
+
+### 🎯 Best Practices
+
+#### Event Planning
+1. **Set Up Early**: Configure tickets before announcing
+2. **Test Everything**: Test purchase flow completely
+3. **Monitor Sales**: Check sales regularly
+4. **Manage Inventory**: Adjust quantities as needed
+
+#### Customer Experience
+1. **Clear Information**: Provide detailed ticket descriptions
+2. **Easy Purchase**: Streamline the buying process
+3. **Quick Confirmation**: Ensure fast email delivery
+4. **Support Access**: Provide help contact information
+
+#### Technical Maintenance
+1. **Regular Cleanup**: Run expired payment cleanup
+2. **Monitor Logs**: Check for errors regularly
+3. **Update Prices**: Adjust pricing as needed
+4. **Backup Data**: Regular data backups
+
+This e-ticketing system provides a complete solution for event ticket sales with the security, reliability, and user experience needed for professional events.
 
 ## Setup Instructions
 
 ### 1. Environment Configuration
 
-Add your Paystack configuration to your `.env.local` file:
+Add your configuration to `.env.local`:
 
 ```env
 # Paystack Configuration (Test Mode)
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_your_paystack_test_key_here
 
+# Email Configuration (NEW)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+
+# Site URL (for email links)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
 # For production, use your live key:
 # NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_live_your_paystack_live_key_here
 ```
 
-### 2. Get Paystack API Keys
+### 2. Email Setup (Required for Confirmations)
+
+**Quick Gmail Setup:**
+1. Enable 2-Factor Authentication on your Google account
+2. Go to Google Account Settings → Security → App passwords
+3. Generate an app password for "Mail"
+4. Use this password as `EMAIL_PASS` in your environment
+
+**📋 Detailed Setup**: See [README-TICKET-EMAIL-SETUP.md](./README-TICKET-EMAIL-SETUP.md) for complete instructions including other email providers.
+
+### 3. Install Dependencies
+
+```bash
+npm install qrcode @types/qrcode nodemailer @types/nodemailer
+```
+
+### 4. Get Paystack API Keys
 
 1. Sign up for a Paystack account at [https://paystack.com](https://paystack.com)
 2. Complete account verification
 3. Navigate to Settings > API Keys & Webhooks
 4. Copy your public key (use test key for development)
 
-### 3. Event Configuration
+### 5. Event Configuration
 
 When creating events, you can now choose from three event types:
 
@@ -52,185 +274,227 @@ When creating events, you can now choose from three event types:
 2. **Ticketing Only** - Events focused on ticket sales without voting
 3. **Voting and Ticketing** - Combined events with both voting and ticketing features
 
-For ticketing-enabled events, you must provide:
-- Event venue
-- Maximum attendees
-- (Vote price is only required for voting-enabled events)
+## User Experience Flow
 
-## How It Works
+### 1. Ticket Purchase
+```
+Browse Events → Select Ticket Type → Enter Details → Pay with Paystack → Confirmation
+```
 
-### Ticket Purchase Flow
+### 2. After Payment
+```
+Payment Success → Email Sent → QR Codes Generated → Confirmation Page → Ready for Event
+```
 
-1. **Event Discovery**: Users browse events and navigate to ticket purchase page
-2. **Ticket Selection**: Users select ticket type and quantity
-3. **Form Completion**: Users fill in personal details
-4. **Payment Processing**: 
-   - System creates pending ticket records
-   - User is redirected to Paystack for payment
-   - Payment is processed securely
-5. **Confirmation**: 
-   - Payment success triggers ticket confirmation
-   - User receives confirmation page with ticket details
-   - Email confirmation is sent (future enhancement)
+### 3. At Event
+```
+Show QR Code → Scan for Verification → Quick Check-in → Enjoy Event
+```
 
-### Admin Payment Tracking
-
-Admins can view comprehensive payment analytics including:
-
-- **Total Revenue**: Combined revenue from votes and tickets
-- **Vote Revenue**: Earnings from voting payments
-- **Ticket Revenue**: Earnings from ticket sales
-- **Transaction Status**: Pending, successful, and failed payments
-- **Payment Details**: Transaction IDs, amounts, event details
-- **Filtering Options**: By status, event, payment type, and date range
-
-## Database Schema
-
-### Events Table
-New fields added for ticketing:
-- `eventType`: "voting_only" | "ticketing_only" | "voting_and_ticketing"
-- `venue`: Optional venue for ticketing events
-- `maxAttendees`: Optional capacity limit for ticketing events
-
-### Ticket Types Table
-- `name`: Ticket type name (e.g., "VIP", "Regular")
-- `description`: Optional description
-- `eventId`: Reference to event
-- `price`: Ticket price
-- `quantity`: Total available tickets
-- `remaining`: Remaining tickets for sale
-- `benefits`: Array of benefits/inclusions
-- `saleStartDate`: Optional sale start date
-- `saleEndDate`: Optional sale end date
+## Database Schema Updates
 
 ### Tickets Table
-- `ticketTypeId`: Reference to ticket type
-- `eventId`: Reference to event
-- `purchaserName`: Buyer's name
-- `purchaserEmail`: Buyer's email
-- `purchaserPhone`: Buyer's phone
-- `transactionId`: Unique transaction identifier
-- `amount`: Ticket price
-- `status`: "pending" | "confirmed" | "cancelled" | "used"
-- `ticketCode`: Unique ticket code for validation
-- `createdAt`: Purchase timestamp
-- `usedAt`: Optional usage timestamp
-- `additionalDetails`: Optional buyer details (age, gender, requirements)
+```javascript
+{
+  _id: "ticket_id",
+  ticketCode: "1234567890123456", // 16-digit numeric code
+  ticketTypeId: "tickettype_id",
+  eventId: "event_id",
+  purchaserName: "John Doe",
+  purchaserEmail: "john@example.com",
+  purchaserPhone: "+1234567890",
+  transactionId: "TXN-123456789",
+  amount: 50.00,
+  status: "confirmed", // pending, confirmed, used, cancelled
+  createdAt: 1703123456789,
+  additionalDetails: {
+    age: 25,
+    gender: "male",
+    specialRequirements: "Wheelchair access"
+  }
+}
+```
 
-### Payments Table
-Enhanced with ticketing support:
-- `paymentType`: "vote" | "ticket"
-- `ticketTypeId`: Optional reference to ticket type
-- Additional fields for tracking different payment types
+### QR Code Data Format
+```json
+{
+  "ticketCode": "1234567890123456",
+  "eventId": "k123456789",
+  "eventName": "Concert Event",
+  "purchaserName": "John Doe",
+  "timestamp": 1703123456789,
+  "version": "1.0"
+}
+```
 
 ## API Endpoints
 
-### Ticket Management
-- `createTicketType`: Create new ticket type for an event
-- `updateTicketType`: Update existing ticket type
-- `deleteTicketType`: Delete ticket type (if no tickets sold)
-- `getTicketTypes`: Get all ticket types for an event
+### Email Confirmation
+```
+POST /api/tickets/send-confirmation
+Content-Type: application/json
 
-### Ticket Purchasing
-- `purchaseTickets`: Create pending ticket purchase
-- `confirmTicketPayment`: Confirm payment and activate tickets
-- `getTicketsByTransaction`: Get tickets for a transaction
-- `validateTicket`: Mark ticket as used
+{
+  "tickets": [ticket_objects],
+  "event": event_object,
+  "purchaserEmail": "user@example.com",
+  "transactionId": "TXN-123456789"
+}
+```
 
-### Payment Tracking
-- `getPaymentsByDepartment`: Get all payments for a department
-- `getTicketPayments`: Get all ticket payments
-- `getEventPaymentStats`: Get payment statistics for an event
-- `updatePaymentStatus`: Update payment status
+### Existing Endpoints
+- `GET /api/tickets/qrcode/[id]` - Generate QR code for ticket
+- `POST /api/paystack/ussd/*` - USSD payment integration
+- All existing Convex queries and mutations
 
 ## Testing
 
-### Test Payment Details
+### 1. Test Email System
+```bash
+# Test with local development
+npm run dev
 
-For testing payments, use these Paystack test card details:
+# Purchase a ticket and check email
+# Verify QR codes generate correctly
+# Test sharing and download features
+```
 
-- **Card Number**: 4084 0840 8408 4081
-- **Expiry Date**: Any future date (e.g., 12/25)
-- **CVV**: Any 3 digits (e.g., 123)
-- **PIN**: Any 4 digits (e.g., 1234)
-- **OTP**: Any 6 digits (e.g., 123456)
+### 2. Paystack Test Cards
+```
+Test Card: 4084084084084081
+CVV: Any 3 digits
+Expiry: Any future date
+PIN: 0000 or 1234
+```
 
-### Test Workflow
+### 3. QR Code Testing
+- Use any QR code scanner app
+- Verify JSON data structure
+- Test on different devices
 
-1. Create an event with ticket types
-2. Navigate to the event ticket purchase page
-3. Select ticket type and fill in details
-4. Use test payment details to complete purchase
-5. Verify ticket confirmation page shows correct details
-6. Check admin dashboard for payment tracking
+## Advanced Features
+
+### 1. Ticket Validation
+```javascript
+// Scan QR code to get data
+const qrData = parseQRCodeData(scannedData);
+if (qrData && isValidTicketCode(qrData.ticketCode)) {
+  // Validate ticket in database
+  // Mark as used
+  // Allow entry
+}
+```
+
+### 2. Bulk Operations
+- Import ticket holders from CSV
+- Bulk ticket generation
+- Mass email campaigns
+- Export attendee lists
+
+### 3. Analytics
+- Track email open rates
+- Monitor QR code scan locations
+- Analyze ticket sales patterns
+- Revenue reporting
+
+## Security Features
+
+### 1. Ticket Security
+- ✅ 16-digit unique codes prevent guessing
+- ✅ QR codes include timestamps
+- ✅ One-time use validation
+- ✅ Encrypted ticket data
+
+### 2. Email Security
+- ✅ App passwords for email accounts
+- ✅ Rate limiting on email sending
+- ✅ Secure SMTP connections
+- ✅ Anti-spam compliance
+
+### 3. Payment Security
+- ✅ Paystack PCI compliance
+- ✅ Transaction verification
+- ✅ Secure token handling
+- ✅ Fraud detection
 
 ## Future Enhancements
 
 ### Planned Features
-- Email confirmation with QR codes
-- Ticket PDF generation
-- Bulk ticket purchase discounts
-- Refund management
-- Advanced ticket validation
-- Mobile app integration
-- Analytics dashboard improvements
+- **PDF ticket generation** with improved design
+- **Bulk ticket purchase discounts**
+- **Refund management system**
+- **Advanced ticket validation dashboard**
+- **Mobile app integration**
+- **Multi-language email templates**
+- **Webhook integrations for real-time updates**
+- **Analytics dashboard improvements**
 
-### Webhook Integration
-
-For production environments, consider implementing Paystack webhooks for additional security:
-
-```javascript
-// Example webhook endpoint
-app.post('/api/paystack/webhook', (req, res) => {
-  // Verify webhook signature
-  // Update payment status
-  // Send confirmation emails
-});
-```
+### Integration Possibilities
+- **Check-in mobile app** for event staff
+- **Print-at-home tickets** with PDF generation
+- **Social media sharing** with custom graphics
+- **Calendar integration** for event reminders
+- **SMS notifications** for important updates
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Paystack Key Issues**
-   - Ensure you're using the correct public key for your environment
-   - Test keys start with `pk_test_`, live keys start with `pk_live_`
+1. **Email Not Sending**
+   - Check environment variables
+   - Verify email credentials
+   - Review email provider limits
+   - Check spam folders
 
-2. **Payment Not Confirming**
-   - Check Convex logs for errors
-   - Verify transaction ID matches between frontend and backend
-   - Ensure payment status is being updated correctly
+2. **QR Codes Not Generating**
+   - Ensure `qrcode` package is installed
+   - Check browser Canvas API support
+   - Verify ticket data format
 
-3. **Ticket Availability Issues**
-   - Check ticket quantity and remaining count
-   - Verify sale date restrictions
-   - Ensure event type supports ticketing
+3. **Payment Not Confirming**
+   - Verify Paystack webhook setup
+   - Check transaction ID format
+   - Review Convex logs
 
 ### Debug Mode
 
-Enable debug mode by adding to your environment:
-
-```env
+Enable detailed logging:
+```javascript
+// Add to environment
 NODE_ENV=development
+ENABLE_DEBUG_LOGS=true
 ```
 
-This will show additional logging information for troubleshooting.
+### Support Resources
+- **Email Setup**: [README-TICKET-EMAIL-SETUP.md](./README-TICKET-EMAIL-SETUP.md)
+- **Paystack Documentation**: [https://paystack.com/docs](https://paystack.com/docs)
+- **Convex Documentation**: [https://docs.convex.dev](https://docs.convex.dev)
+- **QR Code Library**: [https://github.com/soldair/node-qrcode](https://github.com/soldair/node-qrcode)
 
-## Support
+## Performance Optimization
 
-For issues related to:
-- **Paystack Integration**: Check [Paystack Documentation](https://paystack.com/docs)
-- **Convex Backend**: Check [Convex Documentation](https://docs.convex.dev)
-- **Application Issues**: Check the console logs and error messages
+### 1. Email Sending
+- Use background jobs for bulk emails
+- Implement queue system for high volume
+- Cache email templates
+- Monitor delivery rates
 
-## Security Considerations
+### 2. QR Code Generation
+- Generate QR codes asynchronously
+- Cache generated codes
+- Optimize image compression
+- Use CDN for static assets
 
-1. **API Keys**: Never expose secret keys in frontend code
-2. **Payment Verification**: Always verify payments on the server side
-3. **Data Validation**: Validate all user inputs before processing
-4. **Transaction Security**: Use unique transaction IDs and verify amounts
-5. **Ticket Security**: Generate unique, hard-to-guess ticket codes
+### 3. Database Queries
+- Index ticket codes for fast lookup
+- Optimize transaction queries
+- Use pagination for large lists
+- Cache frequent queries
 
 ## License
 
-This e-ticketing integration is part of the eVote application and follows the same licensing terms. 
+This e-ticketing system is part of the eVote application. Please refer to the main project license for usage terms.
+
+---
+
+**Need Help?** Check the [Email Setup Guide](./README-TICKET-EMAIL-SETUP.md) or contact support with specific error messages and logs. 
