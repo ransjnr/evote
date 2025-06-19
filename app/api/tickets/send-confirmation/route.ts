@@ -3,18 +3,35 @@ import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 
 // Email configuration
-const transporter = nodemailer.createTransporter({
-  service: "gmail", // You can change this to your preferred email service
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const createTransporter = () => {
+  // Check if email credentials are available
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    service: "gmail", // You can change this to your preferred email service
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+};
 
 export async function POST(request: NextRequest) {
   try {
     const { tickets, event, purchaserEmail, transactionId } =
       await request.json();
+
+    // Check if email service is configured
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.warn("Email service not configured - skipping email send");
+      return NextResponse.json({
+        success: true,
+        message: "Email service not configured, tickets processed successfully",
+      });
+    }
 
     // Generate QR codes for each ticket
     const ticketsWithQR = await Promise.all(
