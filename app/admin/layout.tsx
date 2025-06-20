@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { TutorialMenu } from "@/components/ui/tutorial/tutorial-menu";
 import { WelcomeTutorial } from "@/components/ui/tutorial/welcome-tutorial";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -388,14 +389,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         href="/"
         className="text-2xl font-bold text-primary flex items-center lg:mb-8"
       >
-        <img
-          src="/Pollix icon.png"
+        <Image
+          src="/Pollix.png"
           alt="Pollix"
           width="32"
           height="32"
           className="mr-2 rounded"
         />
-        Pollix
       </Link>
 
       <div className="flex items-center space-x-2">
@@ -428,14 +428,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             href="/"
             className="text-2xl font-bold text-primary flex items-center lg:mb-8"
           >
-            <img
-              src="/Pollix icon.png"
+            <Image
+              src="/Pollix.png"
               alt="Pollix"
               width="32"
               height="32"
               className="mr-2 rounded"
             />
-            Pollix
           </Link>
           <button
             onClick={() => setIsMobileSidebarOpen(false)}
@@ -529,14 +528,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             isSidebarCollapsed && "justify-center"
           )}
         >
-          <img
-            src="/Pollix icon.png"
+          <Image
+            src="/Pollix.png"
             alt="Pollix"
-            width="32"
-            height="32"
+            width={75}
+            height={75}
             className="mr-2 rounded"
           />
-          {!isSidebarCollapsed && <>Pollix</>}
+          {!isSidebarCollapsed && <></>}
         </Link>
 
         {!isSidebarCollapsed && (

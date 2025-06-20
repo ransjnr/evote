@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, ArrowRight, Mail } from "lucide-react";
+import Image from "next/image";
 
 export default function RegistrationSuccess() {
   return (
@@ -46,14 +47,13 @@ export default function RegistrationSuccess() {
           href="/"
           className="text-2xl font-bold flex items-center transition-all duration-300"
         >
-          <img
-            src="/Pollix icon.png"
+          <Image
+            src="/Pollix.png"
             alt="Pollix"
-            width="32"
-            height="32"
+            width="75"
+            height="75"
             className="mr-2 rounded"
           />
-          <span className="text-gray-800">Pollix</span>
         </Link>
       </div>
 

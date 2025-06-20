@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TutorialMenu } from "@/components/ui/tutorial/tutorial-menu";
 import { WelcomeTutorial } from "@/components/ui/tutorial/welcome-tutorial";
+import Image from "next/image";
 
 export default function SuperAdminLayout({
   children,
@@ -124,8 +125,13 @@ export default function SuperAdminLayout({
             href="/"
             className="text-lg font-bold flex items-center text-primary"
           >
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
+            <Image
+              src="/Pollix.png"
+              alt="Pollix"
+              width={75}
+              height={75}
+              className="mr-2 rounded"
+            />
             <span className="text-xs ml-2 text-gray-500 font-normal">
               SuperAdmin
             </span>
@@ -160,10 +166,13 @@ export default function SuperAdminLayout({
                   href="/"
                   className="text-lg font-bold flex items-center text-primary"
                 >
-                  <span className="bg-primary text-white p-1 rounded mr-1">
-                    e
-                  </span>
-                  Vote
+                  <Image
+                    src="/Pollix.png"
+                    alt="Pollix"
+                    width={75}
+                    height={75}
+                    className="mr-2 rounded"
+                  />
                   <span className="text-xs ml-2 text-gray-500 font-normal">
                     SuperAdmin
                   </span>
@@ -263,10 +272,16 @@ export default function SuperAdminLayout({
                 !isSidebarOpen && "justify-center"
               )}
             >
-              <span className="bg-primary text-white p-1 rounded mr-1">e</span>
+              <span className="bg-primary text-white p-1 rounded mr-1">P</span>
               {isSidebarOpen && (
                 <>
-                  Vote
+                  <Image
+                    src="/Pollix.png"
+                    alt="Pollix"
+                    width={75}
+                    height={75}
+                    className="mr-2 rounded"
+                  />
                   <span className="text-xs ml-2 text-gray-500 font-normal">
                     SuperAdmin
                   </span>

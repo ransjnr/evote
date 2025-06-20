@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -11,8 +12,13 @@ export function Footer() {
               href="/"
               className="text-2xl font-bold flex items-center mb-6"
             >
-              <span className="bg-white text-primary p-1 rounded mr-1">e</span>
-              <span className="text-white">Vote</span>
+              <Image
+                src="/Pollix.png"
+                alt="Pollix"
+                width={75}
+                height={75}
+                className="mr-2 rounded"
+              />
             </Link>
             <p className="text-white/70 mb-6">
               A secure, real-time, feature-rich pay-to-vote platform for school

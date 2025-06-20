@@ -39,6 +39,7 @@ import {
   LogIn,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import Image from "next/image";
 
 // Define error type
 interface ConvexError {
@@ -347,18 +348,13 @@ export default function AdminRegister() {
           onMouseEnter={() => setELogoHover(true)}
           onMouseLeave={() => setELogoHover(false)}
         >
-          <img
-            src="/Pollix icon.png"
+          <Image
+            src="/Pollix.png"
             alt="Pollix"
-            width="32"
-            height="32"
+            width="75"
+            height="75"
             className={`mr-2 rounded transition-all duration-300 ease-in-out transform ${eLogoHover ? "scale-110" : "scale-100"}`}
           />
-          <span
-            className={`transition-colors duration-300 ${eLogoHover ? "text-indigo-700" : "text-gray-800"}`}
-          >
-            Pollix
-          </span>
         </Link>
       </div>
 

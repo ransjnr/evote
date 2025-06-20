@@ -9,6 +9,8 @@ import { useInView } from "react-intersection-observer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { Header } from "@/components/ui/header";
 import {
   Card,
   CardContent,
@@ -203,54 +205,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Navbar - Updated to match the image */}
-      <header className="border-b py-4 bg-white sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center px-4">
-          <Link href="/" className="text-2xl font-bold flex items-center">
-            <span className="bg-primary text-white p-1 rounded mr-1">e</span>
-            Vote
-          </Link>
-
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/events"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Events
-            </Link>
-            <Link
-              href="/features"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Features
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/blog"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Blog
-            </Link>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <Link href="/events">
-              <Button variant="outline" className="rounded-full">
-                Explore Events
-              </Button>
-            </Link>
-            <Link href="/admin/login">
-              <Button className="rounded-full">
-                Get Started <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main content */}
       <main className="flex-1">

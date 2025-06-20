@@ -31,6 +31,7 @@ import {
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
+import Image from "next/image";
 
 // Route protection wrapper
 export default function VerificationPendingPage() {
@@ -248,14 +249,13 @@ export default function VerificationPendingPage() {
           href="/"
           className="flex items-center justify-center text-2xl font-bold mb-6"
         >
-          <img
-            src="/Pollix icon.png"
+          <Image
+            src="/Pollix.png"
             alt="Pollix"
-            width="32"
-            height="32"
+            width="75"
+            height="75"
             className="mr-2 rounded"
           />
-          <span className="text-gray-800">Pollix</span>
         </Link>
 
         <AnimatePresence mode="wait">
