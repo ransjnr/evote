@@ -32,6 +32,7 @@ import { Footer } from "@/components/ui/footer";
 import { NomineeCard, NomineeCardSkeleton } from "@/components/ui/nominee-card";
 import { Check, ThumbsUp } from "lucide-react";
 import confetti from "canvas-confetti";
+import { Header } from "@/components/ui/header";
 
 // Define error type
 interface ConvexError {
@@ -422,60 +423,7 @@ export default function EventPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <header className="py-4 px-6 bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-gray-100">
-        <div className="container mx-auto flex justify-between items-center">
-          <Link
-            href="/"
-            className="text-2xl font-bold text-primary flex items-center"
-          >
-            <span className="bg-primary text-white p-1 rounded mr-1">P</span>
-            Pollix
-          </Link>
-          <nav className="hidden md:flex space-x-8">
-            <Link
-              href="/events"
-              className="text-primary font-bold border-b-2 border-primary"
-            >
-              Events
-            </Link>
-            <Link
-              href="/features"
-              className="text-gray-600 hover:text-primary transition-colors font-medium"
-            >
-              Features
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-gray-600 hover:text-primary transition-colors font-medium"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/blog"
-              className="text-gray-600 hover:text-primary transition-colors font-medium"
-            >
-              Blog
-            </Link>
-            <Link
-              href="/etickets"
-              className="text-gray-600 hover:text-primary transition-colors font-medium"
-            >
-              eTicketing
-            </Link>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/events"
-              className="hidden md:block text-gray-700 hover:text-primary font-medium transition-colors"
-            >
-              Explore Events
-            </Link>
-            <Link href="/admin/login">
-              <Button>Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Event Hero */}
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-12">
