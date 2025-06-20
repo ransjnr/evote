@@ -13,10 +13,10 @@ export function Footer() {
               className="text-2xl font-bold flex items-center mb-6"
             >
               <Image
-                src="/Pollix.png"
+                src="/Pollix_white.png"
                 alt="Pollix"
-                width={75}
-                height={75}
+                width={100}
+                height={100}
                 className="mr-2 rounded"
               />
             </Link>
