@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
@@ -26,8 +26,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { NomineeFlyer } from "@/components/ui/nominee-flyer";
+import {
+  ArrowLeft,
+  Edit,
+  Save,
+  X,
+  Trophy,
+  Copy,
+  Download,
+  Share2,
+  FileImage,
+  Printer,
+} from "lucide-react";
 
 // Define error type
 interface ConvexError {
@@ -43,6 +58,8 @@ export default function NomineeDetail() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFlyerDialogOpen, setIsFlyerDialogOpen] = useState(false);
+  const flyerRef = useRef<HTMLDivElement>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -63,6 +80,12 @@ export default function NomineeDetail() {
   const event = useQuery(
     api.events.getEvent,
     category ? { eventId: category.eventId } : "skip"
+  );
+
+  // Get department details if event is loaded
+  const department = useQuery(
+    api.departments.getDepartment,
+    event ? { departmentId: event.departmentId } : "skip"
   );
 
   // Get vote count for this nominee
@@ -156,7 +179,87 @@ export default function NomineeDetail() {
     }
   };
 
-  if (!nominee || !category || !event) {
+  // Flyer generation functions
+  const generateVotingUrl = () => {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    return `${baseUrl}/events/${event?._id}`;
+  };
+
+  const getUSSDCode = () => {
+    // You can make this configurable in your settings
+    return "*920*1234#";
+  };
+
+  const handleDownloadFlyer = async () => {
+    if (!flyerRef.current) return;
+
+    try {
+      const { default: html2canvas } = await import("html2canvas");
+      const canvas = await html2canvas(flyerRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+
+      const link = document.createElement("a");
+      link.download = `${nominee?.name?.replace(/\s+/g, "_")}_flyer.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+
+      toast.success("Flyer downloaded successfully!");
+    } catch (error) {
+      console.error("Error downloading flyer:", error);
+      toast.error("Failed to download flyer");
+    }
+  };
+
+  const handlePrintFlyer = () => {
+    if (!flyerRef.current) return;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Flyer - ${nominee?.name}</title>
+            <style>
+              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+              @media print {
+                body { margin: 0; padding: 0; }
+                @page { size: A4 portrait; margin: 0.5in; }
+              }
+            </style>
+          </head>
+          <body>
+            ${flyerRef.current.innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const handleShareFlyer = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Vote for ${nominee?.name}`,
+          text: `Support ${nominee?.name} in ${category?.name}! Use code: ${nominee?.code}`,
+          url: generateVotingUrl(),
+        });
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+      // Fallback to copying link
+      const shareText = `Vote for ${nominee?.name} in ${category?.name}!\n\nNominee Code: ${nominee?.code}\nVoting URL: ${generateVotingUrl()}\nUSSD: ${getUSSDCode()}`;
+      navigator.clipboard.writeText(shareText);
+      toast.success("Flyer details copied to clipboard!");
+    }
+  };
+
+  if (!nominee || !category || !event || !department) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
@@ -179,6 +282,14 @@ export default function NomineeDetail() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <Dialog open={isFlyerDialogOpen} onOpenChange={setIsFlyerDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <FileImage className="h-4 w-4" />
+                Generate Flyer
+              </Button>
+            </DialogTrigger>
+          </Dialog>
           <Button variant="destructive" onClick={handleDeleteClick}>
             Delete Nominee
           </Button>
@@ -360,6 +471,114 @@ export default function NomineeDetail() {
           </Card>
         </div>
       )}
+
+      {/* Flyer Generation Dialog */}
+      <Dialog open={isFlyerDialogOpen} onOpenChange={setIsFlyerDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileImage className="h-5 w-5" />
+              Campaign Flyer for {nominee.name}
+            </DialogTitle>
+            <DialogDescription>
+              Generate a professional campaign flyer with voting instructions
+              for your nominee.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Flyer Preview */}
+            <div className="flex justify-center p-4 bg-gray-50 rounded-lg">
+              <div ref={flyerRef}>
+                <NomineeFlyer
+                  nominee={{
+                    name: nominee.name,
+                    code: nominee.code,
+                    description: nominee.description,
+                    imageUrl: nominee.imageUrl,
+                  }}
+                  category={{
+                    name: category.name,
+                  }}
+                  event={{
+                    name: event.name,
+                    votePrice: event.votePrice,
+                  }}
+                  department={{
+                    name: department.name,
+                  }}
+                  votingUrl={generateVotingUrl()}
+                  ussdCode={getUSSDCode()}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 pt-4">
+              <Button
+                onClick={handleDownloadFlyer}
+                className="flex items-center gap-2"
+                variant="default"
+              >
+                <Download className="h-4 w-4" />
+                Download as Image
+              </Button>
+
+              <Button
+                onClick={handlePrintFlyer}
+                className="flex items-center gap-2"
+                variant="outline"
+              >
+                <Printer className="h-4 w-4" />
+                Print Flyer
+              </Button>
+
+              <Button
+                onClick={handleShareFlyer}
+                className="flex items-center gap-2"
+                variant="outline"
+              >
+                <Share2 className="h-4 w-4" />
+                Share Details
+              </Button>
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-2">
+                How to use this flyer:
+              </h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>
+                  • <strong>Download:</strong> Save as PNG image to share
+                  digitally
+                </li>
+                <li>
+                  • <strong>Print:</strong> Print physical copies for
+                  distribution
+                </li>
+                <li>
+                  • <strong>Share:</strong> Copy voting details to share via
+                  messaging apps
+                </li>
+                <li>
+                  • <strong>Distribute:</strong> Share with supporters to help
+                  campaign for votes
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsFlyerDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
