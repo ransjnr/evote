@@ -137,7 +137,9 @@ export default function CampaignDetailsPage() {
   // Get categories for selected event - only query when we have a valid eventId
   const eventCategories = useQuery(
     api.categories.listCategoriesByEvent,
-    conversionData.eventId ? { eventId: conversionData.eventId as Id<"events"> } : "skip"
+    conversionData.eventId
+      ? { eventId: conversionData.eventId as Id<"events"> }
+      : "skip"
   );
 
   // Mutations
