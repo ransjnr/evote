@@ -461,7 +461,7 @@ export default function PricingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/admin/register">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="lg" className="bg-green-600 hover:bg-green-700">
                   Create Your Account
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
