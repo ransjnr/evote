@@ -18,6 +18,7 @@ import type * as categories from "../categories.js";
 import type * as departments from "../departments.js";
 import type * as events from "../events.js";
 import type * as migrations from "../migrations.js";
+import type * as nominations from "../nominations.js";
 import type * as nominees from "../nominees.js";
 import type * as payments from "../payments.js";
 import type * as session from "../session.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   departments: typeof departments;
   events: typeof events;
   migrations: typeof migrations;
+  nominations: typeof nominations;
   nominees: typeof nominees;
   payments: typeof payments;
   session: typeof session;

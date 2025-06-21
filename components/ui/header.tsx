@@ -34,6 +34,7 @@ export function Header({ className = "" }: HeaderProps) {
   const navLinks = [
     // { href: "/events", label: "Events" },
     { href: "/etickets", label: "eTicketing" },
+    { href: "/nominations", label: "Nominations" },
     // { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
     // { href: "/blog", label: "Blog" },

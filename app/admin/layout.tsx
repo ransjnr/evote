@@ -25,6 +25,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TutorialMenu } from "@/components/ui/tutorial/tutorial-menu";
@@ -274,6 +275,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       href: "/admin/nominees",
       icon: Users,
       current: pathname.includes("/admin/nominees"),
+    },
+    {
+      name: "Nominations",
+      href: "/admin/nominations",
+      icon: UserPlus,
+      current: pathname.includes("/admin/nominations"),
     },
     {
       name: "Leaderboard",

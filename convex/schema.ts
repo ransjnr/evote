@@ -142,6 +142,67 @@ export default defineSchema({
     timestamp: v.optional(v.number()), // Keep for backward compatibility
   }).index("by_session", ["sessionId"]),
 
+  // Nominations campaigns table - Admin creates these to open nominations
+  nominationCampaigns: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    eventId: v.optional(v.id("events")), // Optional - can be for general awards not tied to specific events
+    departmentId: v.id("departments"),
+    type: v.union(
+      v.literal("awards"), // For award nominations
+      v.literal("voting"), // For voting portfolio nominations
+      v.literal("event_portfolio") // For event management portfolio nominations
+    ),
+    startDate: v.number(),
+    endDate: v.number(),
+    isActive: v.boolean(),
+    maxNominationsPerUser: v.optional(v.number()), // Limit how many people a user can nominate
+    allowSelfNomination: v.boolean(),
+    createdBy: v.id("admins"),
+    createdAt: v.number(),
+  })
+    .index("by_department", ["departmentId"])
+    .index("by_event", ["eventId"])
+    .index("by_type", ["type"]),
+
+  // Nomination categories - What people can be nominated for
+  nominationCategories: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    campaignId: v.id("nominationCampaigns"),
+    requirements: v.optional(v.array(v.string())), // List of requirements for nominees
+    createdBy: v.id("admins"),
+    createdAt: v.number(),
+  }).index("by_campaign", ["campaignId"]),
+
+  // User nominations - Actual nominations submitted by users
+  userNominations: defineTable({
+    campaignId: v.id("nominationCampaigns"),
+    categoryId: v.id("nominationCategories"),
+    nomineeName: v.string(),
+    nomineeEmail: v.optional(v.string()),
+    nomineePhone: v.optional(v.string()),
+    nomineeDescription: v.string(), // Why they're being nominated
+    nominatorName: v.string(),
+    nominatorEmail: v.string(),
+    nominatorPhone: v.optional(v.string()),
+    supportingDocuments: v.optional(v.array(v.string())), // URLs to uploaded documents
+    status: v.union(
+      v.literal("pending"), // Submitted but not reviewed
+      v.literal("approved"), // Approved by admin
+      v.literal("rejected"), // Rejected by admin
+      v.literal("converted") // Converted to actual nominee for voting
+    ),
+    reviewedBy: v.optional(v.id("admins")),
+    reviewedAt: v.optional(v.number()),
+    reviewComments: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_campaign", ["campaignId"])
+    .index("by_category", ["categoryId"])
+    .index("by_status", ["status"])
+    .index("by_nominator_email", ["nominatorEmail"]),
+
   // Payments table
   payments: defineTable({
     transactionId: v.string(),
