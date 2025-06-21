@@ -121,7 +121,7 @@ export default function PricingPage() {
                     Simple Revenue Sharing
                   </CardTitle>
                   <CardDescription className="text-lg text-gray-600 max-w-2xl mx-auto">
-                    EVOTE GH retains 10% of all incoming transactions as service
+                    Pollix retains 10% of all incoming transactions as service
                     fee. You receive 90% of all payments within 5 working days
                     after your event.
                   </CardDescription>
