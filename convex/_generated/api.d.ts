@@ -22,6 +22,7 @@ import type * as nominations from "../nominations.js";
 import type * as nominees from "../nominees.js";
 import type * as payments from "../payments.js";
 import type * as session from "../session.js";
+import type * as systemSettings from "../systemSettings.js";
 import type * as tickets from "../tickets.js";
 import type * as voting from "../voting.js";
 
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   nominees: typeof nominees;
   payments: typeof payments;
   session: typeof session;
+  systemSettings: typeof systemSettings;
   tickets: typeof tickets;
   voting: typeof voting;
 }>;

@@ -346,3 +346,62 @@ export const deleteEvent = mutation({
     return { success: true };
   },
 });
+
+// Get events by department (filter out events from deleted admins for public use)
+export const getActiveEventsByDepartment = query({
+  args: {
+    departmentId: v.id("departments"),
+  },
+  handler: async (ctx, args) => {
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_department", (q) => q.eq("departmentId", args.departmentId))
+      .collect();
+
+    // Filter out events created by deleted admins
+    const activeEvents = [];
+    
+    for (const event of events) {
+      const createdByAdmin = await ctx.db.get(event.createdBy);
+      if (createdByAdmin && !createdByAdmin.isDeleted) {
+        activeEvents.push(event);
+      }
+    }
+    
+    return activeEvents;
+  },
+});
+
+// Get all active public events (for public pages)
+export const getAllActiveEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const events = await ctx.db
+      .query("events")
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    // Filter out events created by deleted admins
+    const activeEvents = [];
+    
+    for (const event of events) {
+      const createdByAdmin = await ctx.db.get(event.createdBy);
+      if (createdByAdmin && !createdByAdmin.isDeleted) {
+        // Get department info
+        const department = await ctx.db.get(event.departmentId);
+        if (department) {
+          // Also check if department was created by a non-deleted admin
+          const deptCreatedByAdmin = await ctx.db.get(department.createdBy);
+          if (deptCreatedByAdmin && !deptCreatedByAdmin.isDeleted) {
+            activeEvents.push({
+              ...event,
+              department,
+            });
+          }
+        }
+      }
+    }
+    
+    return activeEvents;
+  },
+});

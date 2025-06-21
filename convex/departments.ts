@@ -113,3 +113,214 @@ export const updateDepartment = mutation({
     return { success: true };
   },
 });
+
+// Get active departments only (created by non-deleted admins)
+export const getActiveDepartments = query({
+  args: {},
+  handler: async (ctx) => {
+    const departments = await ctx.db.query("departments").collect();
+
+    // Filter out departments created by deleted admins
+    const activeDepartments = [];
+
+    for (const department of departments) {
+      const createdByAdmin = await ctx.db.get(department.createdBy);
+      if (createdByAdmin && !createdByAdmin.isDeleted) {
+        activeDepartments.push(department);
+      }
+    }
+
+    return activeDepartments;
+  },
+});
+
+// Delete a department (super admin only)
+export const deleteDepartment = mutation({
+  args: {
+    departmentId: v.id("departments"),
+    superAdminId: v.id("admins"),
+  },
+  handler: async (ctx, args) => {
+    // Verify super admin privileges
+    const superAdmin = await ctx.db.get(args.superAdminId);
+    if (!superAdmin || superAdmin.role !== "super_admin") {
+      throw new ConvexError(
+        "Unauthorized: Only super admins can delete departments"
+      );
+    }
+
+    const department = await ctx.db.get(args.departmentId);
+    if (!department) {
+      throw new ConvexError("Department not found");
+    }
+
+    // Check if department has any events
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_department", (q) =>
+        q.eq("departmentId", args.departmentId)
+      )
+      .collect();
+
+    if (events.length > 0) {
+      throw new ConvexError(
+        "Cannot delete department with existing events. Delete all events first."
+      );
+    }
+
+    // Check if department has any admins
+    const admins = await ctx.db
+      .query("admins")
+      .filter((q) => q.eq(q.field("departmentId"), department.slug))
+      .collect();
+
+    if (admins.length > 0) {
+      throw new ConvexError(
+        "Cannot delete department with existing admins. Move or delete all admins first."
+      );
+    }
+
+    // Delete the department
+    await ctx.db.delete(args.departmentId);
+
+    return { success: true };
+  },
+});
+
+// Get department statistics
+export const getDepartmentStats = query({
+  args: {
+    departmentId: v.id("departments"),
+  },
+  handler: async (ctx, args) => {
+    const department = await ctx.db.get(args.departmentId);
+    if (!department) {
+      throw new ConvexError("Department not found");
+    }
+
+    // Get events count
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_department", (q) =>
+        q.eq("departmentId", args.departmentId)
+      )
+      .collect();
+
+    // Get admins count
+    const admins = await ctx.db
+      .query("admins")
+      .filter((q) => q.eq(q.field("departmentId"), department.slug))
+      .collect();
+
+    // Get active events count
+    const activeEvents = events.filter((event) => event.isActive);
+
+    // Get categories count
+    let totalCategories = 0;
+    for (const event of events) {
+      const categories = await ctx.db
+        .query("categories")
+        .withIndex("by_event", (q) => q.eq("eventId", event._id))
+        .collect();
+      totalCategories += categories.length;
+    }
+
+    // Get nominees count
+    let totalNominees = 0;
+    for (const event of events) {
+      const categories = await ctx.db
+        .query("categories")
+        .withIndex("by_event", (q) => q.eq("eventId", event._id))
+        .collect();
+
+      for (const category of categories) {
+        const nominees = await ctx.db
+          .query("nominees")
+          .withIndex("by_category", (q) => q.eq("categoryId", category._id))
+          .collect();
+        totalNominees += nominees.length;
+      }
+    }
+
+    // Get votes count
+    let totalVotes = 0;
+    for (const event of events) {
+      const votes = await ctx.db
+        .query("votes")
+        .withIndex("by_event", (q) => q.eq("eventId", event._id))
+        .collect();
+      totalVotes += votes.length;
+    }
+
+    // Get tickets count
+    let totalTickets = 0;
+    for (const event of events) {
+      const tickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_event", (q) => q.eq("eventId", event._id))
+        .collect();
+      totalTickets += tickets.length;
+    }
+
+    return {
+      department,
+      stats: {
+        totalEvents: events.length,
+        activeEvents: activeEvents.length,
+        totalAdmins: admins.length,
+        activeAdmins: admins.filter((admin) => !admin.isDeleted).length,
+        totalCategories,
+        totalNominees,
+        totalVotes,
+        totalTickets,
+      },
+    };
+  },
+});
+
+// Get departments with their statistics (super admin only)
+export const getDepartmentsWithStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const departments = await ctx.db.query("departments").collect();
+
+    const departmentsWithStats = await Promise.all(
+      departments.map(async (department) => {
+        // Get events count
+        const events = await ctx.db
+          .query("events")
+          .withIndex("by_department", (q) =>
+            q.eq("departmentId", department._id)
+          )
+          .collect();
+
+        // Get admins count
+        const admins = await ctx.db
+          .query("admins")
+          .filter((q) => q.eq(q.field("departmentId"), department.slug))
+          .collect();
+
+        // Get creator admin info
+        const createdBy = await ctx.db.get(department.createdBy);
+
+        return {
+          ...department,
+          totalEvents: events.length,
+          activeEvents: events.filter((event) => event.isActive).length,
+          totalAdmins: admins.length,
+          activeAdmins: admins.filter((admin) => !admin.isDeleted).length,
+          createdBy: createdBy
+            ? {
+                _id: createdBy._id,
+                name: createdBy.name,
+                email: createdBy.email,
+                isDeleted: createdBy.isDeleted || false,
+              }
+            : null,
+        };
+      })
+    );
+
+    return departmentsWithStats;
+  },
+});

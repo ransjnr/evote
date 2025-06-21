@@ -12,7 +12,7 @@ import {
   X,
   Shield,
   Building,
-  AlertTriangle,
+  Database,
   Home,
   Settings,
   ChevronLeft,
@@ -107,6 +107,12 @@ export default function SuperAdminLayout({
       href: "/superadmin/settings",
       icon: Settings,
       current: pathname === "/superadmin/settings",
+    },
+    {
+      name: "System Management",
+      href: "/superadmin/system",
+      icon: Database,
+      current: pathname.startsWith("/superadmin/system"),
     },
     {
       name: "Tutorials",

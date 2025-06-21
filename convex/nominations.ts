@@ -556,24 +556,44 @@ export const getActiveCampaigns = query({
 
     const campaigns = await query.collect();
 
-    // Get categories for each campaign
-    const campaignsWithCategories = await Promise.all(
-      campaigns.map(async (campaign) => {
-        const categories = await ctx.db
-          .query("nominationCategories")
-          .withIndex("by_campaign", (q) => q.eq("campaignId", campaign._id))
-          .collect();
+    // Filter out campaigns created by deleted admins
+    const activeCampaigns = [];
 
+    for (const campaign of campaigns) {
+      const createdByAdmin = await ctx.db.get(campaign.createdBy);
+      if (createdByAdmin && !createdByAdmin.isDeleted) {
+        // Also check if department was created by a non-deleted admin
         const department = await ctx.db.get(campaign.departmentId);
+        if (department) {
+          const deptCreatedByAdmin = await ctx.db.get(department.createdBy);
+          if (deptCreatedByAdmin && !deptCreatedByAdmin.isDeleted) {
+            // Get categories for this campaign
+            const categories = await ctx.db
+              .query("nominationCategories")
+              .withIndex("by_campaign", (q) => q.eq("campaignId", campaign._id))
+              .collect();
 
-        return {
-          ...campaign,
-          categories,
-          department,
-        };
-      })
-    );
+            // Filter categories created by non-deleted admins
+            const activeCategories = [];
+            for (const category of categories) {
+              const categoryCreatedByAdmin = await ctx.db.get(
+                category.createdBy
+              );
+              if (categoryCreatedByAdmin && !categoryCreatedByAdmin.isDeleted) {
+                activeCategories.push(category);
+              }
+            }
 
-    return campaignsWithCategories;
+            activeCampaigns.push({
+              ...campaign,
+              categories: activeCategories,
+              department,
+            });
+          }
+        }
+      }
+    }
+
+    return activeCampaigns;
   },
 });

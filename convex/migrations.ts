@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // A simple hash function for password (for development only)
@@ -256,6 +256,216 @@ export const updateAdminSchemaWithRevocation = mutation({
       totalAdmins: admins.length,
       updatedAdmins: updatedCount,
       message: `Migration complete. Updated ${updatedCount} admin records with revocation fields.`,
+    };
+  },
+});
+
+/**
+ * Migration to add deletion tracking fields to all existing admin records
+ *
+ * This adds the isDeleted, deletedBy, deletedAt, restoredBy, and restoredAt
+ * fields to existing admin records that don't have them.
+ */
+export const addDeletionFieldsToAdmins = internalMutation({
+  handler: async (ctx) => {
+    const admins = await ctx.db.query("admins").collect();
+
+    for (const admin of admins) {
+      if (admin.isDeleted === undefined) {
+        await ctx.db.patch(admin._id, {
+          isDeleted: false,
+        });
+      }
+    }
+
+    return { success: true, processedCount: admins.length };
+  },
+});
+
+// Migration to initialize system settings table
+export const initializeSystemSettings = internalMutation({
+  handler: async (ctx) => {
+    console.log("Starting system settings initialization...");
+
+    // Check if settings already exist
+    const existingSettings = await ctx.db.query("systemSettings").collect();
+    if (existingSettings.length > 0) {
+      console.log("System settings already exist, skipping initialization");
+      return { success: true, message: "Settings already initialized" };
+    }
+
+    // Find the first super admin to use as creator
+    const superAdmin = await ctx.db
+      .query("admins")
+      .filter((q) => q.eq(q.field("role"), "super_admin"))
+      .first();
+
+    if (!superAdmin) {
+      console.log("No super admin found, cannot initialize settings");
+      return { success: false, message: "No super admin found" };
+    }
+
+    const now = Date.now();
+
+    const defaultSettings = [
+      // General Settings
+      {
+        key: "app_name",
+        value: "Pollix",
+        description: "Application name displayed throughout the system",
+        category: "general",
+        isPublic: true,
+      },
+      {
+        key: "app_description",
+        value: "Digital Voting and Event Management Platform",
+        description: "Brief description of the application",
+        category: "general",
+        isPublic: true,
+      },
+      {
+        key: "contact_email",
+        value: "admin@pollix.com",
+        description: "Main contact email for the platform",
+        category: "general",
+        isPublic: true,
+      },
+      {
+        key: "support_phone",
+        value: "+233 XXX XXX XXX",
+        description: "Support phone number",
+        category: "general",
+        isPublic: true,
+      },
+
+      // Voting Settings
+      {
+        key: "default_vote_price",
+        value: 1.0,
+        description: "Default price per vote in GHS",
+        category: "voting",
+        isPublic: false,
+      },
+      {
+        key: "minimum_vote_price",
+        value: 0.5,
+        description: "Minimum allowed vote price in GHS",
+        category: "voting",
+        isPublic: false,
+      },
+      {
+        key: "maximum_vote_price",
+        value: 50.0,
+        description: "Maximum allowed vote price in GHS",
+        category: "voting",
+        isPublic: false,
+      },
+      {
+        key: "max_votes_per_transaction",
+        value: 100,
+        description: "Maximum number of votes allowed in a single transaction",
+        category: "voting",
+        isPublic: false,
+      },
+
+      // Payment Settings
+      {
+        key: "paystack_public_key",
+        value: "",
+        description: "Paystack public key for payment processing",
+        category: "payment",
+        isPublic: false,
+      },
+      {
+        key: "paystack_secret_key",
+        value: "",
+        description: "Paystack secret key for payment processing",
+        category: "payment",
+        isPublic: false,
+      },
+      {
+        key: "commission_rate",
+        value: 0.1,
+        description: "Platform commission rate (10%)",
+        category: "payment",
+        isPublic: false,
+      },
+
+      // Email Settings
+      {
+        key: "smtp_host",
+        value: "",
+        description: "SMTP server host for sending emails",
+        category: "email",
+        isPublic: false,
+      },
+      {
+        key: "smtp_port",
+        value: 587,
+        description: "SMTP server port",
+        category: "email",
+        isPublic: false,
+      },
+      {
+        key: "smtp_username",
+        value: "",
+        description: "SMTP username",
+        category: "email",
+        isPublic: false,
+      },
+      {
+        key: "smtp_password",
+        value: "",
+        description: "SMTP password",
+        category: "email",
+        isPublic: false,
+      },
+
+      // Features Settings
+      {
+        key: "registration_enabled",
+        value: true,
+        description: "Whether new admin registration is enabled",
+        category: "features",
+        isPublic: true,
+      },
+      {
+        key: "maintenance_mode",
+        value: false,
+        description: "Whether the system is in maintenance mode",
+        category: "features",
+        isPublic: true,
+      },
+      {
+        key: "max_file_upload_size",
+        value: 5,
+        description: "Maximum file upload size in MB",
+        category: "features",
+        isPublic: false,
+      },
+    ];
+
+    let createdCount = 0;
+
+    for (const setting of defaultSettings) {
+      try {
+        await ctx.db.insert("systemSettings", {
+          ...setting,
+          lastModifiedBy: superAdmin._id,
+          lastModifiedAt: now,
+          createdAt: now,
+        });
+        createdCount++;
+      } catch (error) {
+        console.error(`Failed to create setting ${setting.key}:`, error);
+      }
+    }
+
+    console.log(`Created ${createdCount} system settings`);
+    return {
+      success: true,
+      message: `Initialized ${createdCount} system settings`,
+      createdCount,
     };
   },
 });

@@ -14,6 +14,11 @@ export default defineSchema({
     verifiedAt: v.optional(v.number()),
     revokedBy: v.optional(v.id("admins")),
     revokedAt: v.optional(v.number()),
+    isDeleted: v.optional(v.boolean()),
+    deletedBy: v.optional(v.id("admins")),
+    deletedAt: v.optional(v.number()),
+    restoredBy: v.optional(v.id("admins")),
+    restoredAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_email", ["email"]),
 
@@ -224,4 +229,18 @@ export default defineSchema({
   })
     .index("by_transaction", ["transactionId"])
     .index("by_event", ["eventId"]),
+
+  // System settings table - Global configuration settings
+  systemSettings: defineTable({
+    key: v.string(), // Unique setting key
+    value: v.any(), // Setting value (can be string, number, boolean, object)
+    description: v.optional(v.string()), // Description of what this setting controls
+    category: v.string(), // Category for grouping settings (e.g., "email", "payment", "voting")
+    isPublic: v.boolean(), // Whether this setting can be viewed by non-super admins
+    lastModifiedBy: v.id("admins"),
+    lastModifiedAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_category", ["category"]),
 });
