@@ -1764,7 +1764,7 @@ export default function CampaignDetailsPage() {
                         <SelectValue placeholder="Choose a category..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {eventCategories.map((category) => (
+                        {(eventCategories || []).map((category) => (
                           <SelectItem key={category._id} value={category._id}>
                             {category.name} ({category.type})
                           </SelectItem>
