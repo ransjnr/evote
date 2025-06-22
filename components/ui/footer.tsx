@@ -59,24 +59,33 @@ export function Footer() {
             <h4 className="text-lg font-semibold mb-4">Product</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
+                <Link
+                  href="/#features"
+                  className="text-white/70 hover:text-white"
+                >
                   Features
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
+                <Link
+                  href="/pricing"
+                  className="text-white/70 hover:text-white"
+                >
                   Pricing
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
+                <Link href="/events" className="text-white/70 hover:text-white">
                   Events
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
-                  Testimonials
-                </a>
+                <Link
+                  href="/etickets"
+                  className="text-white/70 hover:text-white"
+                >
+                  E-Tickets
+                </Link>
               </li>
             </ul>
           </div>
@@ -84,25 +93,31 @@ export function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Resources</h4>
             <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-white/70 hover:text-white">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-white/70 hover:text-white">
+              {/* <li> */}
+              {/* <Link
+                  href="/documentation"
+                  className="text-white/70 hover:text-white"
+                >
                   Documentation
-                </a>
-              </li>
+                </Link>
+              </li> */}
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-white/70 hover:text-white">
+                <Link href="/guides" className="text-white/70 hover:text-white">
                   Guides
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/help" className="text-white/70 hover:text-white">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/nominations"
+                  className="text-white/70 hover:text-white"
+                >
+                  Nominations
+                </Link>
               </li>
             </ul>
           </div>
@@ -110,25 +125,34 @@ export function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Company</h4>
             <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-white/70 hover:text-white">
+              {/* <li>
+                <Link href="/about" className="text-white/70 hover:text-white">
                   About Us
-                </a>
-              </li>
+                </Link>
+              </li> */}
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-white/70 hover:text-white">
+                <Link
+                  href="/contact"
+                  className="text-white/70 hover:text-white"
+                >
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/70 hover:text-white">
+                <Link
+                  href="/privacy"
+                  className="text-white/70 hover:text-white"
+                >
                   Privacy Policy
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/admin/register"
+                  className="text-white/70 hover:text-white"
+                >
+                  Get Started
+                </Link>
               </li>
             </ul>
           </div>
@@ -136,7 +160,7 @@ export function Footer() {
 
         <div className="border-t border-white/10 mt-12 pt-8 text-sm text-white/50">
           <p>
-            © {new Date().getFullYear()} eVote Platform. All rights reserved.
+            © {new Date().getFullYear()} BUILD SCITECH. All rights reserved.
           </p>
         </div>
       </div>

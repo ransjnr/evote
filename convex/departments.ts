@@ -69,11 +69,8 @@ export const getDepartmentBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
 
-    if (!department) {
-      throw new ConvexError("Department not found");
-    }
-
-    return department;
+    // Return null instead of throwing an error to allow graceful handling
+    return department || null;
   },
 });
 

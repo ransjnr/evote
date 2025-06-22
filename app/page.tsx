@@ -75,7 +75,7 @@ export default function Home() {
                   variant="outline"
                   className="w-full sm:w-auto bg-green-400 text-white border-none"
                 >
-                  Browse Tickets
+                  Buy Tickets
                   <ArrowUpRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -83,72 +83,53 @@ export default function Home() {
           </div>
 
           <div className="lg:w-1/2">
-            <div className="relative bg-green-100 p-8 rounded-3xl shadow-xl">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg">
+            {/* Arcade Video Demo */}
+            <div className="relative">
+              <div className="arcade-embed-container">
+                <div
+                  style={{
+                    position: "relative",
+                    paddingBottom: "calc(65% + 41px)",
+                    height: 0,
+                    width: "100%",
+                  }}
+                >
+                  <iframe
+                    src="https://demo.arcade.software/1gndiLsfRIlJbl5OEt8q?embed&embed_mobile=inline&embed_desktop=inline&show_copy_link=true"
+                    title="Create a New Event and Nomination Campaign"
+                    frameBorder="0"
+                    loading="lazy"
+                    webkitAllowFullScreen
+                    mozAllowFullScreen
+                    allowFullScreen
+                    allow="clipboard-write"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      colorScheme: "light",
+                      borderRadius: "16px",
+                      overflow: "hidden",
+                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Floating badge */}
+              <div className="absolute -top-4 -left-4 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg z-10">
                 <Vote className="h-6 w-6 text-white" />
               </div>
 
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                <h3 className="font-bold mb-2">
-                  Department of Computer Science
-                </h3>
-                <p className="text-gray-500 text-sm mb-4">Annual Awards 2024</p>
-
-                <div className="space-y-4">
-                  <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                        1
-                      </div>
-                      <span>Best Student</span>
-                    </div>
-                    <span className="text-xs text-gray-500">12 nominees</span>
-                  </div>
-
-                  <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500">
-                        2
-                      </div>
-                      <span>Best Project</span>
-                    </div>
-                    <span className="text-xs text-gray-500">8 nominees</span>
-                  </div>
-
-                  <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">
-                        3
-                      </div>
-                      <span>Best Innovation</span>
-                    </div>
-                    <span className="text-xs text-gray-500">15 nominees</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-800">245</div>
-                  <div className="text-xs text-gray-500">Total Votes</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-800">₵1,225</div>
-                  <div className="text-xs text-gray-500">Revenue</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-800">35</div>
-                  <div className="text-xs text-gray-500">Nominees</div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                <span className="text-sm text-gray-600">
-                  📈 +12% from last event
-                </span>
+              {/* Demo badge */}
+              <div className="absolute -bottom-2 -right-2 bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200 z-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                  <span className="text-xs text-gray-500">Live</span>
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                  <span className="text-xs font-medium text-gray-700">
+                    Live Demo
+                  </span>
                 </div>
               </div>
             </div>

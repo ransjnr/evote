@@ -71,7 +71,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const createDepartment = useMutation(api.departments.createDepartment);
 
   // Check if there might be an error with department fetch
-  const isDepartmentError = admin?.departmentId && department === undefined;
+  const isDepartmentError =
+    admin?.departmentId && (department === undefined || department === null);
 
   // Auto-handle missing department
   useEffect(() => {
@@ -85,11 +86,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     }
 
     const handleMissingDepartment = async () => {
-      // Only proceed if admin exists, department is undefined (error occurred),
+      // Only proceed if admin exists, department is undefined/null (error occurred),
       // and we haven't already tried to create the department
       if (
         admin?.departmentId &&
-        (department === undefined || isDepartmentError) &&
+        (department === undefined ||
+          department === null ||
+          isDepartmentError) &&
         !isCreatingDepartment &&
         !departmentCreated &&
         allDepartments !== undefined // Make sure we've loaded all departments
