@@ -9,19 +9,19 @@ export async function POST(req: Request) {
   try {
     const raw = await req.text();
     const params = new URLSearchParams(raw);
-    const sessionId = params.get("sessionId") || "";
-    const phoneNumber = params.get("phoneNumber") || "";
-    const text = params.get("text") || "";
+    const sessionId = params.get("SESSIONID") || "";
+    const phoneNumber = params.get("MSISDN") || "";
+    const text = params.get("USERDATA") || "";
 
     let response = "";
     const input = text.split("*");
 
     if (text === "") {
-      response = "CON Welcome to eVote\n1. Vote\n2. eTicket\n3. Help";
+      response = "CON Welcome to Pollix\n1. Vote\n2. eTicket\n3. Help";
     } else if (input[0] === "1") {
       switch (input.length) {
         case 1:
-          response = "CON Enter the unique code of your nominee:";
+          response = "CON Enter unique code:";
           break;
         case 2: {
           const nomineeCode = input[1];
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
             await convexClient.mutation(api.session.storeVoteSession, {
               sessionId,
               eventId: event._id,
-              votePrice: event.votePrice,
+              votePrice: event.votePrice || 0,
               nomineeCode: nomineeCode,
             });
 
@@ -83,19 +83,22 @@ export async function POST(req: Request) {
           const total = (numVotes * session.votePrice).toFixed(2);
 
           // Initialize Paystack mobile money payment
-          const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              sessionId,
-              nomineeCode: session.nomineeCode,
-              voteCount: numVotes,
-              amount: parseFloat(total),
-              phoneNumber,
-            }),
-          });
+          const paymentResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/ussd`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                sessionId,
+                nomineeCode: session.nomineeCode,
+                voteCount: numVotes,
+                amount: parseFloat(total),
+                phoneNumber,
+              }),
+            }
+          );
 
           const paymentData = await paymentResponse.json();
 
@@ -113,11 +116,11 @@ export async function POST(req: Request) {
 
           // Handle different payment statuses
           if (paymentData.status === "pay_offline") {
-            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm you understand`;
+            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm`;
           } else if (paymentData.status === "send_otp") {
-            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm you understand`;
+            response = `CON Total cost is GHC ${total}\n\n${paymentData.displayText}\n\nPress 1 to confirm`;
           } else if (paymentData.status === "success") {
-            response = "END Payment successful! Your votes have been recorded.";
+            response = "END Payment successful.";
           } else {
             response = "END Payment status unclear. Please try again.";
           }
@@ -125,12 +128,15 @@ export async function POST(req: Request) {
         }
         case 5:
           if (input[4] === "1") {
-            const session = await convexClient.query(api.session.getVoteSession, {
-              sessionId,
-            });
+            const session = await convexClient.query(
+              api.session.getVoteSession,
+              {
+                sessionId,
+              }
+            );
 
             if (!session || !session.paymentReference) {
-              response = "END Payment session expired. Please start again.";
+              response = "END Session expired. Please start again.";
               break;
             }
 
@@ -147,9 +153,10 @@ export async function POST(req: Request) {
             const verifyData = await verifyResponse.json();
 
             if (verifyData.data.status === "success") {
-              response = "END Payment successful! Your votes have been recorded.";
+              response = "END Payment successful.";
             } else {
-              response = "END Payment is still pending. Please check your phone to complete the payment.";
+              response =
+                "END Payment pending. Please check your phone to complete payment.";
             }
           } else {
             response = "END Payment not confirmed.";
@@ -159,9 +166,9 @@ export async function POST(req: Request) {
           response = "END Invalid input.";
       }
     } else if (input[0] === "2") {
-      response = "END eTicket coming soon!";
+      response = "END eTicket coming soon.";
     } else if (input[0] === "3") {
-      response = "END Contact support at help@example.com";
+      response = "END Contact support at help@pollix.com";
     } else {
       response = "END Invalid option selected.";
     }
