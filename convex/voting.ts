@@ -2,6 +2,9 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
+// Note: Email sending is now handled directly by the frontend after payment verification
+// This ensures reliable delivery and works in both development and production
+
 // Initialize a payment transaction
 export const initializePayment = mutation({
   args: {
@@ -9,6 +12,7 @@ export const initializePayment = mutation({
     categoryId: v.id("categories"),
     eventId: v.id("events"),
     voteCount: v.optional(v.number()), // Make voteCount optional
+    voterEmail: v.optional(v.string()), // Add voter email for notifications
   },
   handler: async (ctx, args) => {
     // Default to 1 vote if not specified
@@ -56,27 +60,34 @@ export const initializePayment = mutation({
     const paymentId = await ctx.db.insert("payments", {
       transactionId,
       amount: totalAmount,
-      voteCount: voteCount, // Store vote count explicitly
+      voteCount: voteCount,
       status: "pending",
       eventId: args.eventId,
       paymentReference: "",
       paymentType: "vote",
+      nomineeId: args.nomineeId, // Store nominee reference
       createdAt: Date.now(),
     });
 
+    // Return the payment info for processing
     return {
       success: true,
       payment: {
+        id: paymentId,
         transactionId,
         amount: totalAmount,
         voteCount: voteCount,
+        nomineeId: args.nomineeId,
+        categoryId: args.categoryId,
+        eventId: args.eventId,
+        voterEmail: args.voterEmail,
       },
     };
   },
 });
 
 // Verify and record a payment
-export const verifyPayment = mutation({
+export const verifyPayment = action({
   args: {
     transactionId: v.string(),
     paymentReference: v.string(),
@@ -84,15 +95,16 @@ export const verifyPayment = mutation({
     categoryId: v.id("categories"),
     eventId: v.id("events"),
     voteCount: v.optional(v.number()), // Make voteCount optional
+    voterEmail: v.optional(v.string()), // Add voter email for notifications
   },
   handler: async (ctx, args) => {
     // Find the payment record
-    const payment = await ctx.db
-      .query("payments")
-      .withIndex("by_transaction", (q) =>
-        q.eq("transactionId", args.transactionId)
-      )
-      .first();
+    const payment = await ctx.runQuery(
+      internal.voting.getPaymentByTransaction,
+      {
+        transactionId: args.transactionId,
+      }
+    );
 
     if (!payment) {
       throw new ConvexError("Payment not found");
@@ -113,9 +125,9 @@ export const verifyPayment = mutation({
 
     // Verify the nominee, category and event still exist
     const [nominee, category, event] = await Promise.all([
-      ctx.db.get(args.nomineeId),
-      ctx.db.get(args.categoryId),
-      ctx.db.get(args.eventId),
+      ctx.runQuery(internal.voting.getNomineeById, { id: args.nomineeId }),
+      ctx.runQuery(internal.voting.getCategoryById, { id: args.categoryId }),
+      ctx.runQuery(internal.voting.getEventById, { id: args.eventId }),
     ]);
 
     if (!nominee) throw new ConvexError("Nominee not found");
@@ -132,48 +144,65 @@ export const verifyPayment = mutation({
       throw new ConvexError("Voting is no longer open for this event");
     }
 
-    // In a real-world scenario, we'd verify the payment with Paystack's API
-    // This would involve a server-side call to Paystack's verify endpoint
-    // For example:
-    // const paystackVerification = await verifyWithPaystackAPI(args.paymentReference);
-    // if (!paystackVerification.success) throw new ConvexError("Payment verification failed");
-
-    // Update payment status to succeeded
-    await ctx.db.patch(payment._id, {
-      status: "succeeded",
-      paymentReference: args.paymentReference,
-      voteCount: voteCount, // Ensure vote count is recorded explicitly
-    });
-
-    // Record votes - one database entry per vote for accurate counting
-    const voteIds = [];
-
-    for (let i = 0; i < voteCount; i++) {
-      const voteId = await ctx.db.insert("votes", {
+    // Call mutation to process the payment
+    const result = await ctx.runMutation(
+      internal.voting.processPaymentMutation,
+      {
+        paymentId: payment._id,
+        transactionId: args.transactionId,
+        paymentReference: args.paymentReference,
         nomineeId: args.nomineeId,
         categoryId: args.categoryId,
         eventId: args.eventId,
+        voteCount,
+        voterEmail: args.voterEmail,
+      }
+    );
+
+    // Send email notification if voter email is provided
+    if (args.voterEmail) {
+      console.log(
+        "📧 Voter email found, sending notification:",
+        args.voterEmail
+      );
+
+      const emailData = {
+        voterEmail: args.voterEmail,
+        nominee: {
+          name: nominee.name,
+          code: nominee.code,
+        },
+        event: {
+          name: event.name,
+        },
+        voteCount,
+        amount: payment.amount,
         transactionId: args.transactionId,
-        amount: payment.amount / voteCount, // Divide the total amount by vote count for per-vote amount
-        createdAt: Date.now(),
-      });
+      };
 
-      voteIds.push(voteId);
+      console.log(
+        "📧 Email data prepared:",
+        JSON.stringify(emailData, null, 2)
+      );
+
+      // Send email notification asynchronously (non-blocking)
+      ctx.scheduler.runAfter(
+        0,
+        internal.voting.sendVoteNotificationEmail,
+        emailData
+      );
+    } else {
+      console.log(
+        "⚠️ No voter email provided - email notification will be skipped"
+      );
     }
-
-    // Get the total votes for this nominee
-    const nomineeVotes = await ctx.db
-      .query("votes")
-      .withIndex("by_nominee", (q) => q.eq("nomineeId", args.nomineeId))
-      .collect();
-
-    const totalVotes = nomineeVotes.length;
 
     return {
       success: true,
-      voteIds,
-      totalVotes,
+      voteIds: result.voteIds,
+      totalVotes: result.totalVotes,
       voteCount,
+      emailSent: !!args.voterEmail,
     };
   },
 });

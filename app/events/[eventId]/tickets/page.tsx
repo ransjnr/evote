@@ -111,7 +111,57 @@ export default function PurchaseTickets() {
       });
 
       if (result.success) {
-        toast.success("Payment successful! Your tickets have been confirmed.");
+        console.log("✅ Payment confirmed, result:", result);
+
+        // Send email confirmation directly after successful payment verification
+        if (purchaserEmail && result.tickets) {
+          console.log(
+            "📧 Sending ticket confirmation email for",
+            result.tickets.length,
+            "tickets..."
+          );
+
+          try {
+            const emailResponse = await fetch(
+              "/api/tickets/send-confirmation",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  tickets: result.tickets,
+                  event: event,
+                  purchaserEmail: purchaserEmail,
+                  transactionId: transactionId,
+                }),
+              }
+            );
+
+            if (emailResponse.ok) {
+              const emailResult = await emailResponse.json();
+              console.log("✅ Ticket confirmation email sent:", emailResult);
+              toast.success(
+                "Payment successful! Check your email for tickets."
+              );
+            } else {
+              const errorText = await emailResponse.text();
+              console.error(
+                "❌ Email failed:",
+                emailResponse.status,
+                errorText
+              );
+              toast.success("Payment confirmed! (Email delivery pending)");
+            }
+          } catch (emailError) {
+            console.error("💥 Email request failed:", emailError);
+            toast.success("Payment confirmed! (Email delivery pending)");
+          }
+        } else {
+          console.warn(
+            "⚠️ Cannot send email: missing purchaserEmail or tickets data"
+          );
+          toast.success("Payment confirmed!");
+        }
+
         setIsDialogOpen(false);
         resetForm();
         // Redirect to confirmation page

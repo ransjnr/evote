@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,6 +39,9 @@ export default function SuperAdminLayout({
 
   // Authentication check
   useEffect(() => {
+    // Skip auth check for login page
+    if (pathname === "/superadmin/login") return;
+
     if (!isAuthenticated || !admin) {
       router.push("/superadmin/login");
       return;
@@ -48,7 +52,7 @@ export default function SuperAdminLayout({
       logout();
       router.push("/superadmin/login");
     }
-  }, [isAuthenticated, admin, router, logout]);
+  }, [isAuthenticated, admin, router, logout, pathname]);
 
   // Hide sidebar on smaller screens by default
   useEffect(() => {
@@ -113,6 +117,12 @@ export default function SuperAdminLayout({
       href: "/superadmin/system",
       icon: Database,
       current: pathname.startsWith("/superadmin/system"),
+    },
+    {
+      name: "Email System Test",
+      href: "/superadmin/test-email",
+      icon: Mail,
+      current: pathname === "/superadmin/test-email",
     },
     {
       name: "Tutorials",

@@ -51,7 +51,7 @@ interface PaymentProps {
   amount: number;
   email?: string;
   metadata: PaymentMetadata;
-  onSuccess: (response: { reference: string }) => void;
+  onSuccess: (response: { reference: string }, email: string) => void;
   onClose: () => void;
 }
 
@@ -134,7 +134,7 @@ const PaystackCheckout = ({
             ],
           },
           callback: (response: PaymentResponse) => {
-            onSuccess(response);
+            onSuccess(response, userEmail);
           },
           onClose: () => {
             onClose();
@@ -220,6 +220,7 @@ export default function EventPage() {
   const [isVoting, setIsVoting] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [voteCastCount, setVoteCastCount] = useState(0);
+  const [voterEmail, setVoterEmail] = useState<string>("");
 
   // Get event details
   const event = useQuery(
@@ -354,10 +355,14 @@ export default function EventPage() {
     setIsPaymentOpen(true);
   };
 
-  const handlePaymentSuccess = async (response: PaymentResponse) => {
+  const handlePaymentSuccess = async (
+    response: PaymentResponse,
+    email: string
+  ) => {
     if (!selectedNominee || !selectedCategory || !event) return;
 
     setIsVoting(true);
+    setVoterEmail(email); // Store the voter email
 
     try {
       // Initialize the payment
@@ -366,6 +371,7 @@ export default function EventPage() {
         categoryId: selectedCategory._id,
         eventId: event._id,
         voteCount: voteCount, // Pass the selected vote count
+        voterEmail: email, // Pass the voter email for notifications
       });
 
       if (initResult.success) {
@@ -380,9 +386,46 @@ export default function EventPage() {
           categoryId: selectedCategory._id,
           eventId: event._id,
           voteCount: finalVoteCount, // Use the vote count from the transaction
+          voterEmail: email, // Add voter email for confirmation
         });
 
         if (verifyResult.success) {
+          // Send email confirmation directly (reliable method)
+          if (email) {
+            console.log("📧 Sending vote confirmation email...");
+            fetch("/api/send-vote-confirmation", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: email,
+                nominee: {
+                  name: selectedNominee.name,
+                  code: selectedNominee.code,
+                },
+                event: {
+                  name: event.name,
+                },
+                voteCount: finalVoteCount,
+                amount: initResult.payment.amount,
+                transactionId: initResult.payment.transactionId,
+              }),
+            })
+              .then(async (response) => {
+                if (response.ok) {
+                  const result = await response.json();
+                  console.log("✅ Vote confirmation email sent:", result);
+                  toast.success("Vote confirmed! Check your email for confirmation.");
+                } else {
+                  console.error("❌ Email failed:", response.status);
+                  toast.warning("Vote recorded but email confirmation failed.");
+                }
+              })
+              .catch((error) => {
+                console.error("💥 Email request failed:", error);
+                toast.warning("Vote recorded but email confirmation failed.");
+              });
+          }
+
           // Reset vote count for next transaction
           setVoteCount(1);
           // Use the total votes from the result or fall back to our value

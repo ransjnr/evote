@@ -1,6 +1,7 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 
 // Helper function to generate 16-digit ticket code
 const generateTicketCode = () => {
@@ -320,38 +321,10 @@ export const confirmTicketPayment = mutation({
       remaining: ticketType.remaining - tickets.length,
     });
 
-    // Get event details for email
-    const event = await ctx.db.get(payment.eventId);
+    // Email notification is now handled by the frontend after payment confirmation
+    console.log("✅ Payment confirmed successfully - email will be sent by frontend");
 
-    if (event && tickets.length > 0) {
-      // Send confirmation email
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/tickets/send-confirmation`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tickets,
-              event,
-              purchaserEmail: tickets[0].purchaserEmail,
-              transactionId: args.transactionId,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          console.error("Failed to send confirmation email");
-        }
-      } catch (error) {
-        console.error("Error sending confirmation email:", error);
-        // Don't throw error - payment is already successful
-      }
-    }
-
-    return { success: true };
+    return { success: true, tickets };
   },
 });
 
@@ -670,3 +643,6 @@ export const getTicketType = query({
     return ticketType;
   },
 });
+
+// Note: Email sending is now handled directly by the frontend after payment confirmation
+// This ensures reliable delivery and works in both development and production

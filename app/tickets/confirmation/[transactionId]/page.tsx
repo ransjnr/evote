@@ -113,6 +113,36 @@ export default function TicketConfirmation() {
       if (payment && payment.status === "pending") {
         try {
           await confirmPayment({ transactionId });
+
+          // Send email confirmation directly after payment confirmation
+          if (tickets.length > 0 && event) {
+            console.log("📧 Sending ticket confirmation email...");
+            try {
+              const emailResponse = await fetch("/api/tickets/send-confirmation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  tickets: tickets,
+                  event: event,
+                  purchaserEmail: tickets[0].purchaserEmail,
+                  transactionId: transactionId,
+                }),
+              });
+
+              if (emailResponse.ok) {
+                const emailResult = await emailResponse.json();
+                console.log("✅ Ticket confirmation email sent:", emailResult);
+                toast.success("Confirmation email sent! Check your inbox.");
+              } else {
+                console.error("❌ Failed to send ticket confirmation email:", emailResponse.status);
+                toast.warning("Tickets confirmed but email delivery failed.");
+              }
+            } catch (emailError) {
+              console.error("💥 Email request failed:", emailError);
+              toast.warning("Tickets confirmed but email delivery failed.");
+            }
+          }
+
           setIsProcessing(false);
           if (processingInterval) {
             clearInterval(processingInterval);
