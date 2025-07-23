@@ -598,7 +598,7 @@ export default function CampaignDetailsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="px-2 sm:px-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -645,10 +645,10 @@ export default function CampaignDetailsPage() {
         </div>
       </div>
 
-      {/* Campaign Info */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Categories</p>
@@ -661,7 +661,7 @@ export default function CampaignDetailsPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
@@ -676,7 +676,7 @@ export default function CampaignDetailsPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
@@ -690,7 +690,7 @@ export default function CampaignDetailsPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
@@ -706,16 +706,28 @@ export default function CampaignDetailsPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="nominations">Nominations</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="overflow-x-auto"
+      >
+        <TabsList className="flex flex-wrap gap-2 sm:gap-4">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="text-xs sm:text-sm">
+            Categories
+          </TabsTrigger>
+          <TabsTrigger value="nominations" className="text-xs sm:text-sm">
+            Nominations
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="text-xs sm:text-sm">
+            Approved
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Campaign Details</CardTitle>
@@ -986,7 +998,7 @@ export default function CampaignDetailsPage() {
 
             {nominations && nominations.length > 0 ? (
               <Card>
-                <Table>
+                <Table className="text-xs sm:text-sm">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nominee</TableHead>
@@ -1118,7 +1130,7 @@ export default function CampaignDetailsPage() {
 
             {approvedNominations && approvedNominations.length > 0 ? (
               <Card>
-                <Table>
+                <Table className="text-xs sm:text-sm">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nominee</TableHead>
@@ -1405,6 +1417,7 @@ export default function CampaignDetailsPage() {
                       )
                     }
                     className="rounded"
+                    placeholder="Allow self-nomination"
                   />
                   <Label htmlFor="allowSelfNomination">
                     Allow Self-Nomination

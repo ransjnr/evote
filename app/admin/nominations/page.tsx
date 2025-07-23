@@ -156,18 +156,20 @@ export default function NominationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 sm:px-0">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nominations</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Nominations
+          </h1>
+          <p className="mt-1 sm:mt-2 text-gray-600 text-sm sm:text-base">
             Manage nomination campaigns for awards, voting portfolios, and event
             management positions.
           </p>
         </div>
         <Link href="/admin/nominations/new">
-          <Button>
+          <Button className="w-full sm:w-auto rounded-md text-xs sm:text-sm py-2">
             <Plus className="mr-2 h-4 w-4" />
             New Campaign
           </Button>
@@ -175,7 +177,7 @@ export default function NominationsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -183,12 +185,12 @@ export default function NominationsPage() {
               placeholder="Search campaigns..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-xs sm:text-sm"
             />
           </div>
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] text-xs sm:text-sm">
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
           <SelectContent>
@@ -199,7 +201,7 @@ export default function NominationsPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] text-xs sm:text-sm">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -212,28 +214,30 @@ export default function NominationsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
                   Total Campaigns
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">
                   {campaigns.length}
                 </p>
               </div>
-              <FileText className="h-8 w-8 text-blue-600" />
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Active
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">
                   {
                     campaigns.filter((c) => {
                       const now = Date.now();
@@ -244,166 +248,134 @@ export default function NominationsPage() {
                   }
                 </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
                   Total Nominations
                 </p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-xl sm:text-2xl font-bold text-purple-600">
                   {campaigns.reduce((sum, c) => sum + c.nominationsCount, 0)}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-purple-600" />
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Categories</p>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Categories
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-orange-600">
                   {campaigns.reduce((sum, c) => sum + c.categoriesCount, 0)}
                 </p>
               </div>
-              <Trophy className="h-8 w-8 text-orange-600" />
+              <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Campaigns List */}
-      {filteredCampaigns.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No campaigns found
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {campaigns.length === 0
-                ? "Get started by creating your first nomination campaign."
-                : "Try adjusting your search or filter criteria."}
-            </p>
-            {campaigns.length === 0 && (
-              <Link href="/admin/nominations/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Campaign
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredCampaigns.map((campaign) => (
-            <Card
-              key={campaign._id}
-              className="hover:shadow-lg transition-shadow"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    {getTypeIcon(campaign.type)}
-                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                  </div>
-                  {getStatusBadge(campaign)}
+      <div className="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {filteredCampaigns.map((campaign) => (
+          <Card
+            key={campaign._id}
+            className="hover:shadow-lg transition-shadow rounded-lg"
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center space-x-2">
+                  {getTypeIcon(campaign.type)}
+                  <CardTitle className="text-base sm:text-lg">
+                    {campaign.name}
+                  </CardTitle>
                 </div>
-                <CardDescription className="space-y-1">
-                  <span className="block">
-                    {getTypeLabel(campaign.type)} • {campaign.department?.name}
+                {getStatusBadge(campaign)}
+              </div>
+              <CardDescription className="space-y-1">
+                <span className="block text-xs sm:text-sm">
+                  {getTypeLabel(campaign.type)} • {campaign.department?.name}
+                </span>
+                {campaign.description && (
+                  <span className="text-xs sm:text-sm block">
+                    {campaign.description}
                   </span>
-                  {campaign.description && (
-                    <span className="text-sm block">
-                      {campaign.description}
-                    </span>
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {formatDate(campaign.startDate)} -{" "}
-                      {formatDate(campaign.endDate)}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Categories</p>
-                      <p className="font-semibold">
-                        {campaign.categoriesCount}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Nominations</p>
-                      <p className="font-semibold">
-                        {campaign.nominationsCount}
-                      </p>
-                    </div>
-                  </div>
-
-                  {campaign.event && (
-                    <div className="text-sm">
-                      <p className="text-gray-500">Related Event</p>
-                      <p className="font-medium">{campaign.event.name}</p>
-                    </div>
-                  )}
-
-                  {/* <div className="pt-2">
-                    <Link href={`/admin/nominations/${campaign._id}`}>
-                      <Button className="w-full" size="sm">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Manage Campaign
-                      </Button>
-                    </Link>
-                  </div> */}
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {formatDate(campaign.startDate)} -{" "}
+                    {formatDate(campaign.endDate)}
+                  </span>
                 </div>
-              </CardContent>
-              <CardFooter className="flex flex-col space-y-2">
-                <div className="flex space-x-2 w-full">
-                  <Link
-                    href={`/admin/nominations/${campaign.slug}/${campaign._id}`}
-                    className="flex-1"
-                  >
-                    <Button variant="outline" className="w-full">
-                      <Eye className="mr-2 h-4 w-4" />
-                      Manage
-                    </Button>
-                  </Link>
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                  <div>
+                    <p className="text-gray-500">Categories</p>
+                    <p className="font-semibold">{campaign.categoriesCount}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Nominations</p>
+                    <p className="font-semibold">{campaign.nominationsCount}</p>
+                  </div>
+                </div>
+                {campaign.event && (
+                  <div className="text-xs sm:text-sm">
+                    <p className="text-gray-500">Related Event</p>
+                    <p className="font-medium">{campaign.event.name}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <Link
+                  href={`/admin/nominations/${campaign.slug}/${campaign._id}`}
+                  className="flex-1"
+                >
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      const publicUrl = `${window.location.origin}/nominations/${campaign.slug}`;
-                      navigator.clipboard.writeText(publicUrl);
-                      toast.success("Public link copied to clipboard!");
-                    }}
-                    className="flex-1"
+                    className="w-full rounded-md text-xs sm:text-sm py-2"
                   >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                </div>
-                <Link href={`/nominations/${campaign.slug}`} className="w-full">
-                  <Button variant="ghost" size="sm" className="w-full text-xs">
-                    <ExternalLink className="mr-2 h-3 w-3" />
-                    View Public Page
+                    <Eye className="mr-2 h-4 w-4" />
+                    Manage
                   </Button>
                 </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const publicUrl = `${window.location.origin}/nominations/${campaign.slug}`;
+                    navigator.clipboard.writeText(publicUrl);
+                    toast.success("Public link copied to clipboard!");
+                  }}
+                  className="flex-1 rounded-md text-xs sm:text-sm py-2"
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+              </div>
+              <Link href={`/nominations/${campaign.slug}`} className="w-full">
+                <Button variant="ghost" size="sm" className="w-full text-xs">
+                  <ExternalLink className="mr-2 h-3 w-3" />
+                  View Public Page
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

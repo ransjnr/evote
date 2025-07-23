@@ -170,18 +170,18 @@ export default function NominationsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Header />
-      <div className="container mx-auto py-20 px-4">
+      <div className="container mx-auto px-2 sm:px-4 py-8 sm:py-20">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2 sm:mb-4">
             Submit Your Nominations
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Nominate outstanding individuals for awards, leadership positions,
             and event management roles. Your voice matters in recognizing
             excellence in our community.
@@ -193,34 +193,34 @@ export default function NominationsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-12"
+          className="mb-8 sm:mb-12"
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
             Active Nomination Campaigns
           </h2>
 
           {campaigns.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {campaigns.map((campaign) => (
                 <motion.div
                   key={campaign._id}
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
                   className="group"
                 >
-                  <Card className="h-full hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
+                  <Card className="h-full hover:shadow-xl transition-all duration-300 group-hover:scale-105 rounded-lg">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center space-x-2">
                           <div className="p-2 bg-primary/10 rounded-lg">
                             {getTypeIcon(campaign.type)}
                           </div>
                           <div>
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                            <CardTitle className="text-base sm:text-lg group-hover:text-primary transition-colors">
                               {campaign.name}
                             </CardTitle>
-                            <CardDescription className="text-sm">
+                            <CardDescription className="text-xs sm:text-sm">
                               {getTypeLabel(campaign.type)} •{" "}
                               {campaign.department?.name}
                             </CardDescription>
@@ -228,25 +228,25 @@ export default function NominationsPage() {
                         </div>
                         <Badge
                           variant="outline"
-                          className="text-green-600 border-green-200"
+                          className="text-green-600 border-green-200 text-xs sm:text-sm"
                         >
                           {getDaysRemaining(campaign.endDate)} days left
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-2 sm:space-y-4">
                       {campaign.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
                           {campaign.description}
                         </p>
                       )}
 
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
                         <Calendar className="h-4 w-4" />
                         <span>Ends {formatDate(campaign.endDate)}</span>
                       </div>
 
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
                         <Trophy className="h-4 w-4" />
                         <span>
                           {campaign.categories.length}{" "}
@@ -257,15 +257,18 @@ export default function NominationsPage() {
                         </span>
                       </div>
 
-                      <div className="pt-2 space-y-2">
+                      <div className="pt-2 space-y-2 flex flex-col">
                         <Link href={`/nominations/${campaign.slug}`}>
-                          <Button variant="outline" className="w-full">
+                          <Button
+                            variant="outline"
+                            className="w-full rounded-md text-xs sm:text-sm py-2"
+                          >
                             <Star className="mr-2 h-4 w-4" />
                             View Campaign
                           </Button>
                         </Link>
                         <Button
-                          className="w-full"
+                          className="w-full rounded-md text-xs sm:text-sm py-2"
                           onClick={() => openSubmitDialog(campaign)}
                           disabled={getDaysRemaining(campaign.endDate) === 0}
                         >
@@ -283,14 +286,14 @@ export default function NominationsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-center py-16"
+              className="text-center py-8 sm:py-16"
             >
               <div className="max-w-md mx-auto">
-                <Clock className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <Clock className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mb-4" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                   No Active Campaigns
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-gray-500 text-sm sm:text-base">
                   There are currently no active nomination campaigns. Check back
                   later for new opportunities to nominate outstanding
                   individuals.
@@ -307,36 +310,42 @@ export default function NominationsPage() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="max-w-4xl mx-auto"
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">
             How It Works
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-3">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="h-6 w-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Star className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Choose a Campaign</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">
+                Choose a Campaign
+              </h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Select from active nomination campaigns for awards, leadership,
                 or event management positions.
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Send className="h-6 w-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Send className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Submit Nomination</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">
+                Submit Nomination
+              </h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Fill out the nomination form with details about why your nominee
                 deserves recognition.
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-6 w-6 text-purple-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Review Process</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">
+                Review Process
+              </h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Admins review all nominations and approved nominees may be added
                 to voting ballots.
               </p>
@@ -347,9 +356,11 @@ export default function NominationsPage() {
 
       {/* Nomination Submission Dialog */}
       <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-full w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto p-2 sm:p-6 rounded-lg">
           <DialogHeader>
-            <DialogTitle>Submit Nomination</DialogTitle>
+            <DialogTitle className="text-lg sm:text-2xl">
+              Submit Nomination
+            </DialogTitle>
             <DialogDescription>
               {selectedCampaign && (
                 <>Submit a nomination for {selectedCampaign.name}</>
@@ -358,7 +369,7 @@ export default function NominationsPage() {
           </DialogHeader>
 
           {selectedCampaign && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Category Selection */}
               <div>
                 <Label htmlFor="category">Category *</Label>
@@ -371,11 +382,15 @@ export default function NominationsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {selectedCampaign.categories.map((category: any) => (
-                      <SelectItem key={category._id} value={category._id}>
+                      <SelectItem
+                        key={category._id}
+                        value={category._id}
+                        className="text-xs sm:text-sm"
+                      >
                         <div>
                           <p className="font-medium">{category.name}</p>
                           {category.description && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs text-gray-500">
                               {category.description}
                             </p>
                           )}
@@ -387,9 +402,11 @@ export default function NominationsPage() {
               </div>
 
               {/* Nominee Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Nominee Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 sm:space-y-4">
+                <h3 className="font-semibold text-base sm:text-lg">
+                  Nominee Information
+                </h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
                   <div>
                     <Label htmlFor="nomineeName">Full Name *</Label>
                     <Input
@@ -399,6 +416,7 @@ export default function NominationsPage() {
                         handleInputChange("nomineeName", e.target.value)
                       }
                       placeholder="Enter nominee's full name"
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                   <div>
@@ -411,6 +429,7 @@ export default function NominationsPage() {
                         handleInputChange("nomineeEmail", e.target.value)
                       }
                       placeholder="Enter nominee's email (optional)"
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                 </div>
@@ -423,6 +442,7 @@ export default function NominationsPage() {
                       handleInputChange("nomineePhone", e.target.value)
                     }
                     placeholder="Enter nominee's phone number (optional)"
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
@@ -437,14 +457,17 @@ export default function NominationsPage() {
                     }
                     placeholder="Describe their achievements, qualities, and why they deserve this nomination..."
                     rows={4}
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               {/* Nominator Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Your Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 sm:space-y-4">
+                <h3 className="font-semibold text-base sm:text-lg">
+                  Your Information
+                </h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
                   <div>
                     <Label htmlFor="nominatorName">Your Full Name *</Label>
                     <Input
@@ -454,6 +477,7 @@ export default function NominationsPage() {
                         handleInputChange("nominatorName", e.target.value)
                       }
                       placeholder="Enter your full name"
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                   <div>
@@ -466,11 +490,12 @@ export default function NominationsPage() {
                         handleInputChange("nominatorEmail", e.target.value)
                       }
                       placeholder="Enter your email address"
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="nominatorPhone">Your Phone Number</Label>
+                  <Label htmlFor="nominatorPhone">Your Phone</Label>
                   <Input
                     id="nominatorPhone"
                     value={formData.nominatorPhone}
@@ -478,6 +503,7 @@ export default function NominationsPage() {
                       handleInputChange("nominatorPhone", e.target.value)
                     }
                     placeholder="Enter your phone number (optional)"
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
@@ -515,16 +541,30 @@ export default function NominationsPage() {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2">
             <Button
               variant="outline"
               onClick={() => setIsSubmitDialogOpen(false)}
+              // disabled={isSubmitting} // This state doesn't exist in the original file, so it's removed.
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button onClick={handleSubmitNomination}>
-              <Send className="mr-2 h-4 w-4" />
-              Submit Nomination
+            <Button
+              onClick={handleSubmitNomination}
+              className="w-full sm:w-auto"
+            >
+              {/* {isSubmitting ? ( // This state doesn't exist in the original file, so it's removed.
+                <>
+                  <div className="animate-spin h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Submitting...
+                </>
+              ) : ( */}
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                Submit Nomination
+              </>
+              {/* )} */}
             </Button>
           </DialogFooter>
         </DialogContent>
