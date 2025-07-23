@@ -598,130 +598,118 @@ export default function CampaignDetailsPage() {
   }
 
   return (
-    <div className="px-2 sm:px-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/admin/nominations">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+    <div className="px-2 sm:px-6 space-y-4 sm:space-y-6">
+      {/* Header: Campaign Name, Status, Actions */}
+      <div className="flex flex-col gap-2 pt-2">
+        <div className="flex flex-col xs:flex-row xs:items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight break-words max-w-[80vw]">
+              {campaign.name}
+            </h1>
+            {getStatusBadge()}
+          </div>
+          <div className="flex gap-2 mt-2 xs:mt-0">
+            <Button
+              variant={campaign.isActive ? "outline" : "default"}
+              onClick={handleToggleActive}
+              disabled={isUpdating}
+              className="rounded-md text-xs sm:text-sm px-3 py-1"
+            >
+              {campaign.isActive ? (
+                <>
+                  <XCircle className="mr-1 h-4 w-4" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-1 h-4 w-4" />
+                  Activate
+                </>
+              )}
             </Button>
-          </Link>
-          <div>
-            <div className="flex items-center space-x-3">
-              {getTypeIcon(campaign.type)}
-              <h1 className="text-3xl font-bold text-gray-900">
-                {campaign.name}
-              </h1>
-              {getStatusBadge()}
-            </div>
-            <p className="mt-2 text-gray-600">
-              {campaign.description || "No description provided"}
-            </p>
+            <Button
+              variant="outline"
+              onClick={openEditDialog}
+              className="rounded-md text-xs sm:text-sm px-3 py-1"
+            >
+              <Settings className="mr-1 h-4 w-4" />
+              Settings
+            </Button>
           </div>
         </div>
-        <div className="flex space-x-2">
-          <Button
-            variant={campaign.isActive ? "outline" : "default"}
-            onClick={handleToggleActive}
-            disabled={isUpdating}
-          >
-            {campaign.isActive ? (
-              <>
-                <XCircle className="mr-2 h-4 w-4" />
-                Deactivate Campaign
-              </>
-            ) : (
-              <>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Activate Campaign
-              </>
-            )}
-          </Button>
-          <Button variant="outline" onClick={openEditDialog}>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
-        </div>
+        {campaign.description && (
+          <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-[90vw]">
+            {campaign.description}
+          </p>
+        )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Categories</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {categories?.length || 0}
-                </p>
-              </div>
-              <Trophy className="h-8 w-8 text-blue-600" />
+      {/* Stats: Unified Card with 2x2 grid */}
+      <Card className="p-0">
+        <CardContent className="p-2 sm:p-4">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col items-center justify-center p-2">
+              <span className="text-xs text-gray-500">Categories</span>
+              <span className="text-lg font-bold text-blue-600">
+                {categories?.length || 0}
+              </span>
+              <Trophy className="h-5 w-5 text-blue-600 mt-1" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Nominations
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {nominations?.length || 0}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-green-600" />
+            <div className="flex flex-col items-center justify-center p-2">
+              <span className="text-xs text-gray-500">Total Nominations</span>
+              <span className="text-lg font-bold text-green-600">
+                {nominations?.length || 0}
+              </span>
+              <Users className="h-5 w-5 text-green-600 mt-1" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {nominations?.filter((n) => n.status === "pending").length ||
-                    0}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
+            <div className="flex flex-col items-center justify-center p-2">
+              <span className="text-xs text-gray-500">Pending</span>
+              <span className="text-lg font-bold text-yellow-600">
+                {nominations?.filter((n) => n.status === "pending").length || 0}
+              </span>
+              <Clock className="h-5 w-5 text-yellow-600 mt-1" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {nominations?.filter((n) => n.status === "approved").length ||
-                    0}
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="flex flex-col items-center justify-center p-2">
+              <span className="text-xs text-gray-500">Approved</span>
+              <span className="text-lg font-bold text-green-600">
+                {nominations?.filter((n) => n.status === "approved").length ||
+                  0}
+              </span>
+              <CheckCircle className="h-5 w-5 text-green-600 mt-1" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Main Content */}
+      {/* Tabs: Compact, scrollable if needed */}
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="overflow-x-auto"
       >
-        <TabsList className="flex flex-wrap gap-2 sm:gap-4">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">
+        <TabsList className="flex flex-nowrap gap-2 border-b border-gray-200 bg-gray-50 rounded-md px-1 py-1">
+          <TabsTrigger
+            value="overview"
+            className="text-xs sm:text-sm px-2 py-1"
+          >
             Overview
           </TabsTrigger>
-          <TabsTrigger value="categories" className="text-xs sm:text-sm">
+          <TabsTrigger
+            value="categories"
+            className="text-xs sm:text-sm px-2 py-1"
+          >
             Categories
           </TabsTrigger>
-          <TabsTrigger value="nominations" className="text-xs sm:text-sm">
+          <TabsTrigger
+            value="nominations"
+            className="text-xs sm:text-sm px-2 py-1"
+          >
             Nominations
           </TabsTrigger>
-          <TabsTrigger value="approved" className="text-xs sm:text-sm">
+          <TabsTrigger
+            value="approved"
+            className="text-xs sm:text-sm px-2 py-1"
+          >
             Approved
           </TabsTrigger>
         </TabsList>
