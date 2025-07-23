@@ -21,13 +21,29 @@ export const createNominationCampaign = mutation({
     createdBy: v.id("admins"),
   },
   handler: async (ctx, args) => {
+    // Generate slug from name
+    const baseSlug = args.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+    let slug = baseSlug;
+    let i = 1;
+    // Ensure uniqueness
+    while (
+      await ctx.db
+        .query("nominationCampaigns")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .first()
+    ) {
+      slug = `${baseSlug}-${i++}`;
+    }
     const campaignId = await ctx.db.insert("nominationCampaigns", {
       ...args,
+      slug,
       isActive: true,
       createdAt: Date.now(),
     });
-
-    return { success: true, campaignId };
+    return { success: true, campaignId, slug };
   },
 });
 
@@ -595,5 +611,87 @@ export const getActiveCampaigns = query({
     }
 
     return activeCampaigns;
+  },
+});
+
+// Get a single nomination campaign by slug
+export const getNominationCampaignBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const campaign = await ctx.db
+      .query("nominationCampaigns")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+    if (!campaign) return null;
+    // Get associated event
+    let event = null;
+    if (campaign.eventId) {
+      event = await ctx.db.get(campaign.eventId);
+    }
+    // Get department
+    const department = await ctx.db.get(campaign.departmentId);
+    // Get categories
+    const categories = await ctx.db
+      .query("nominationCategories")
+      .withIndex("by_campaign", (q) => q.eq("campaignId", campaign._id))
+      .collect();
+    return {
+      ...campaign,
+      event,
+      department,
+      categories,
+    };
+  },
+});
+
+// Update getPublicNominationCampaign to use slug
+export const getPublicNominationCampaign = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const campaign = await ctx.db
+      .query("nominationCampaigns")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+    if (!campaign) {
+      return null;
+    }
+    // Check if campaign is publicly accessible
+    const createdByAdmin = await ctx.db.get(campaign.createdBy);
+    if (!createdByAdmin || createdByAdmin.isDeleted) {
+      return null;
+    }
+    // Check if department is accessible
+    const department = await ctx.db.get(campaign.departmentId);
+    if (!department) {
+      return null;
+    }
+    const deptCreatedByAdmin = await ctx.db.get(department.createdBy);
+    if (!deptCreatedByAdmin || deptCreatedByAdmin.isDeleted) {
+      return null;
+    }
+    // Get categories for this campaign
+    const categories = await ctx.db
+      .query("nominationCategories")
+      .withIndex("by_campaign", (q) => q.eq("campaignId", campaign._id))
+      .collect();
+    // Filter categories created by non-deleted admins
+    const activeCategories = [];
+    for (const category of categories) {
+      const categoryCreatedByAdmin = await ctx.db.get(category.createdBy);
+      if (categoryCreatedByAdmin && !categoryCreatedByAdmin.isDeleted) {
+        activeCategories.push(category);
+      }
+    }
+    // Get event details if campaign is linked to an event
+    let event = null;
+    if (campaign.eventId) {
+      event = await ctx.db.get(campaign.eventId);
+    }
+    return {
+      ...campaign,
+      categories: activeCategories,
+      department,
+      event,
+    };
   },
 });

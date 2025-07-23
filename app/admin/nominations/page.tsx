@@ -37,7 +37,10 @@ import {
   Eye,
   Settings,
   FileText,
+  Share2,
+  ExternalLink,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function NominationsPage() {
   const { admin } = useAuthStore();
@@ -366,21 +369,36 @@ export default function NominationsPage() {
                   </div> */}
                 </div>
               </CardContent>
-              <CardFooter className="flex space-x-2">
-                <Link
-                  href={`/admin/nominations/${campaign._id}`}
-                  className="flex-1"
-                >
-                  <Button variant="outline" className="w-full">
-                    <Eye className="mr-2 h-4 w-4" />
-                    Manage Campaign
+              <CardFooter className="flex flex-col space-y-2">
+                <div className="flex space-x-2 w-full">
+                  <Link
+                    href={`/admin/nominations/${campaign.slug}/${campaign._id}`}
+                    className="flex-1"
+                  >
+                    <Button variant="outline" className="w-full">
+                      <Eye className="mr-2 h-4 w-4" />
+                      Manage
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const publicUrl = `${window.location.origin}/nominations/${campaign.slug}`;
+                      navigator.clipboard.writeText(publicUrl);
+                      toast.success("Public link copied to clipboard!");
+                    }}
+                    className="flex-1"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                </div>
+                <Link href={`/nominations/${campaign.slug}`} className="w-full">
+                  <Button variant="ghost" size="sm" className="w-full text-xs">
+                    <ExternalLink className="mr-2 h-3 w-3" />
+                    View Public Page
                   </Button>
                 </Link>
-                {/* <Link href={`/admin/nominations/${campaign._id}/edit`}>
-                  <Button variant="outline" size="icon" onClick={openEditDialog}>
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </Link> */}
               </CardFooter>
             </Card>
           ))}

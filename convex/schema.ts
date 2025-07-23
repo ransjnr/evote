@@ -150,6 +150,7 @@ export default defineSchema({
   // Nominations campaigns table - Admin creates these to open nominations
   nominationCampaigns: defineTable({
     name: v.string(),
+    slug: v.string(),
     description: v.optional(v.string()),
     eventId: v.optional(v.id("events")), // Optional - can be for general awards not tied to specific events
     departmentId: v.id("departments"),
@@ -168,7 +169,8 @@ export default defineSchema({
   })
     .index("by_department", ["departmentId"])
     .index("by_event", ["eventId"])
-    .index("by_type", ["type"]),
+    .index("by_type", ["type"])
+    .index("by_slug", ["slug"], { unique: true }),
 
   // Nomination categories - What people can be nominated for
   nominationCategories: defineTable({

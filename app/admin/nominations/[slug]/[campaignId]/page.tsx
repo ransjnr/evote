@@ -100,26 +100,26 @@ export default function CampaignDetailsPage() {
     allowSelfNomination: false,
   });
 
-  const campaignId = params.campaignId as Id<"nominationCampaigns">;
+  const slug = params.slug as string;
 
   // Get campaign details
-  const campaign = useQuery(api.nominations.getNominationCampaign, {
-    campaignId,
+  const campaign = useQuery(api.nominations.getNominationCampaignBySlug, {
+    slug,
   });
 
   // Get categories for this campaign
   const categories = useQuery(api.nominations.getNominationCategories, {
-    campaignId,
+    campaignId: campaign?._id,
   });
 
   // Get nominations for this campaign
   const nominations = useQuery(api.nominations.getUserNominations, {
-    campaignId,
+    campaignId: campaign?._id,
   });
 
   // Get approved nominations
   const approvedNominations = useQuery(api.nominations.getUserNominations, {
-    campaignId,
+    campaignId: campaign?._id,
     status: "approved",
   });
 
@@ -163,7 +163,7 @@ export default function CampaignDetailsPage() {
       const result = await createCategory({
         name: newCategory.name.trim(),
         description: newCategory.description.trim() || undefined,
-        campaignId,
+        campaignId: campaign?._id,
         requirements: newCategory.requirements.filter((req) => req.trim()),
         createdBy: admin._id,
       });

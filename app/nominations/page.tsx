@@ -257,7 +257,13 @@ export default function NominationsPage() {
                         </span>
                       </div>
 
-                      <div className="pt-2">
+                      <div className="pt-2 space-y-2">
+                        <Link href={`/nominations/${campaign.slug}`}>
+                          <Button variant="outline" className="w-full">
+                            <Star className="mr-2 h-4 w-4" />
+                            View Campaign
+                          </Button>
+                        </Link>
                         <Button
                           className="w-full"
                           onClick={() => openSubmitDialog(campaign)}
